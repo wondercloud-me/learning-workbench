@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "policyVersion": 1,
-  "sourceTreeSha256": "75780d08fbb29015948002ee119a7699fd6aac1325b5356e8d2d2e5acd52fdfe",
+  "sourceTreeSha256": "677ed420476e01c5214a7c5ed93281ee8f2db53d77f18cd9178f4ece0a18ed17",
   "files": [
     {
       "path": ".gitignore",
@@ -385,8 +385,8 @@
     },
     {
       "path": "scripts/build-browser-sw.mjs",
-      "bytes": 9237,
-      "sha256": "bc711ec4812f629ecaf8742319c2eadbc5c5f808803ea27dc7a439d5d08a5d49"
+      "bytes": 9878,
+      "sha256": "a005889b3c81b8d6b5579035d17fe640f1ad6cb828effdc61a5428f314faad33"
     },
     {
       "path": "scripts/build-main.mjs",
@@ -832,6 +832,11 @@
       "path": "tests/browser-model.test.ts",
       "bytes": 5765,
       "sha256": "930ca0e4a3fac9d9081a48531a35fdb6b6921b11924bade89aae6b654b453ade"
+    },
+    {
+      "path": "tests/browser-notices-build.test.ts",
+      "bytes": 3616,
+      "sha256": "77d91db0ae86025e7e9a1851964362c53418c91f5b3a53b4c5c3bc10b086d6b6"
     },
     {
       "path": "tests/browser-pwa.test.ts",

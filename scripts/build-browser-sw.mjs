@@ -1,4 +1,4 @@
-import {readdir, readFile, writeFile} from 'node:fs/promises';
+import {cp, readdir, readFile, stat, writeFile} from 'node:fs/promises';
 import {resolve, join, relative} from 'node:path';
 import {pathToFileURL} from 'node:url';
 
@@ -9,6 +9,18 @@ export function validateBrowserBase(base) {
 async function filesIn(directory) {
  const entries=await readdir(directory,{withFileTypes:true});
  return (await Promise.all(entries.map(e=>e.isDirectory()?filesIn(join(directory,e.name)):e.isFile()?[join(directory,e.name)]:[]))).flat();
+}
+export async function copyBrowserNotices({sourceDir,outDir}) {
+ const names=['LICENSE','THIRD_PARTY_NOTICES.md','licenses'];
+ for(const name of names){
+  let source;
+  try{source=await stat(join(sourceDir,name));}catch(error){
+   if(error.code==='ENOENT')throw new Error('Required browser notice source missing: '+name,{cause:error});
+   throw error;
+  }
+  if(name==='licenses'?!source.isDirectory():!source.isFile())throw new Error('Invalid browser notice source: '+name);
+ }
+ for(const name of names)await cp(join(sourceDir,name),join(outDir,name),{recursive:true});
 }
 export async function generateBrowserServiceWorker({outDir,base,buildId}) {
  validateBrowserBase(base);
@@ -139,6 +151,7 @@ if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).hr
  const outDir=resolve('dist-browser'),base=validateBrowserBase(process.env.WORKBENCH_BROWSER_BASE??'/learn/');
  const {buildId,base:builtBase}=JSON.parse(await readFile(join(outDir,'browser-build.json'),'utf8'));
  if(base!==builtBase)throw new Error('Build and service worker bases differ');
+ await copyBrowserNotices({sourceDir:resolve('.'),outDir});
  await generateBrowserServiceWorker({outDir,base,buildId});
  console.log('Browser service worker generated for '+base+' ('+buildId+')');
 }
