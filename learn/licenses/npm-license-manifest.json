@@ -1,0 +1,203 @@
+[
+  {
+    "package": "@vscode/codicons",
+    "version": "0.0.46-24",
+    "license": "CC-BY-4.0",
+    "file": "vscode-codicons-0.0.46-24-LICENSE",
+    "sha256": "af5e030844efddbc7ab00dcfea8b019703753d4d9f5172d727c533a492aec665",
+    "source": "https://registry.npmjs.org/@vscode/codicons/-/codicons-0.0.46-24.tgz"
+  },
+  {
+    "package": "@vscode/codicons",
+    "version": "0.0.46-24",
+    "license": "CC-BY-4.0",
+    "file": "vscode-codicons-0.0.46-24-LICENSE-CODE",
+    "sha256": "9906940f61b1f0b533fa7d99baf55178b2808fbe113ea51dfbfad8572ccd5f2b",
+    "source": "https://registry.npmjs.org/@vscode/codicons/-/codicons-0.0.46-24.tgz"
+  },
+  {
+    "package": "diff",
+    "version": "9.0.0",
+    "license": "BSD-3-Clause",
+    "file": "diff-9.0.0-LICENSE",
+    "sha256": "eda81a415869e67809f6a9f3fd6056062cb83a462118e07eec5e92b2e0c40ce9",
+    "source": "https://registry.npmjs.org/diff/-/diff-9.0.0.tgz"
+  },
+  {
+    "package": "react",
+    "version": "19.3.0",
+    "license": "MIT",
+    "file": "react-19.3.0-LICENSE",
+    "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93",
+    "source": "https://registry.npmjs.org/react/-/react-19.3.0.tgz"
+  },
+  {
+    "package": "@jitl/quickjs-wasmfile-release-sync",
+    "version": "0.32.0",
+    "license": "MIT",
+    "file": "jitl-quickjs-wasmfile-release-sync-0.32.0-LICENSE",
+    "sha256": "446a69ae534aa8612d8b16d3bfc670c5a5050597dca3ce9820441a60d5d04fbb",
+    "source": "https://registry.npmjs.org/@jitl/quickjs-wasmfile-release-sync/-/quickjs-wasmfile-release-sync-0.32.0.tgz"
+  },
+  {
+    "package": "@jitl/quickjs-ffi-types",
+    "version": "0.32.0",
+    "license": "MIT",
+    "file": "jitl-quickjs-ffi-types-0.32.0-LICENSE",
+    "sha256": "3c6040aa318612a234cc951609b640c0c63d85ae5a98a9330d3116f1553a79db",
+    "source": "https://registry.npmjs.org/@jitl/quickjs-ffi-types/-/quickjs-ffi-types-0.32.0.tgz"
+  },
+  {
+    "package": "quickjs-emscripten-core",
+    "version": "0.32.0",
+    "license": "MIT",
+    "file": "quickjs-emscripten-core-0.32.0-LICENSE",
+    "sha256": "3c6040aa318612a234cc951609b640c0c63d85ae5a98a9330d3116f1553a79db",
+    "source": "https://registry.npmjs.org/quickjs-emscripten-core/-/quickjs-emscripten-core-0.32.0.tgz"
+  },
+  {
+    "package": "react-dom",
+    "version": "19.3.0",
+    "license": "MIT",
+    "file": "react-dom-19.3.0-LICENSE",
+    "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93",
+    "source": "https://registry.npmjs.org/react-dom/-/react-dom-19.3.0.tgz"
+  },
+  {
+    "package": "scheduler",
+    "version": "0.28.0",
+    "license": "MIT",
+    "file": "scheduler-0.28.0-LICENSE",
+    "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93",
+    "source": "https://registry.npmjs.org/scheduler/-/scheduler-0.28.0.tgz"
+  },
+  {
+    "package": "monaco-editor",
+    "version": "0.56.0",
+    "license": "MIT",
+    "file": "monaco-editor-0.56.0-LICENSE",
+    "sha256": "33e4ff1a06ef62ba21788ea162564ee8165269a24a9ce6ef301837447eab0ac6",
+    "source": "https://registry.npmjs.org/monaco-editor/-/monaco-editor-0.56.0.tgz"
+  },
+  {
+    "package": "marked",
+    "version": "14.0.0",
+    "license": "MIT",
+    "file": "marked-14.0.0-LICENSE.md",
+    "sha256": "8e3a3f82f59a60958f56ca08f445647c32a4733dc7ca6c2c46f6eb898471ab9c",
+    "source": "https://registry.npmjs.org/marked/-/marked-14.0.0.tgz"
+  },
+  {
+    "package": "dompurify",
+    "version": "3.4.8",
+    "license": "(MPL-2.0 OR Apache-2.0)",
+    "file": "dompurify-3.4.8-LICENSE",
+    "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "source": "https://registry.npmjs.org/dompurify/-/dompurify-3.4.8.tgz"
+  },
+  {
+    "package": "dompurify",
+    "version": "3.4.8",
+    "license": "(MPL-2.0 OR Apache-2.0)",
+    "file": "dompurify-3.4.8-LICENSE-MPL",
+    "sha256": "fab3dd6bdab226f1c08630b1dd917e11fcb4ec5e1e020e2c16f83a0a13863e85",
+    "source": "https://registry.npmjs.org/dompurify/-/dompurify-3.4.8.tgz"
+  },
+  {
+    "package": "@types/trusted-types",
+    "version": "2.0.7",
+    "license": "MIT",
+    "file": "types-trusted-types-2.0.7-LICENSE",
+    "sha256": "c2cfccb812fe482101a8f04597dfc5a9991a6b2748266c47ac91b6a5aae15383",
+    "source": "https://registry.npmjs.org/@types/trusted-types/-/trusted-types-2.0.7.tgz"
+  },
+  {
+    "package": "node-html-parser",
+    "version": "9.0.4",
+    "license": "MIT",
+    "file": "node-html-parser-9.0.4-LICENSE",
+    "sha256": "ea75e9321945b7f0bc4644da1e404ad76ce55e9bc05cae3b2f5f2d973aede83b",
+    "source": "https://registry.npmjs.org/node-html-parser/-/node-html-parser-9.0.4.tgz"
+  },
+  {
+    "package": "entities",
+    "version": "8.1.0",
+    "license": "BSD-2-Clause",
+    "file": "entities-8.1.0-LICENSE",
+    "sha256": "cb992345949ccd6e8394b2cd6c465f7b897c864f845937dbf64e8997f389e164",
+    "source": "https://registry.npmjs.org/entities/-/entities-8.1.0.tgz"
+  },
+  {
+    "package": "css-select",
+    "version": "5.2.2",
+    "license": "BSD-2-Clause",
+    "file": "css-select-5.2.2-LICENSE",
+    "sha256": "cb992345949ccd6e8394b2cd6c465f7b897c864f845937dbf64e8997f389e164",
+    "source": "https://registry.npmjs.org/css-select/-/css-select-5.2.2.tgz"
+  },
+  {
+    "package": "css-what",
+    "version": "6.2.2",
+    "license": "BSD-2-Clause",
+    "file": "css-what-6.2.2-LICENSE",
+    "sha256": "cb992345949ccd6e8394b2cd6c465f7b897c864f845937dbf64e8997f389e164",
+    "source": "https://registry.npmjs.org/css-what/-/css-what-6.2.2.tgz"
+  },
+  {
+    "package": "domhandler",
+    "version": "5.0.3",
+    "license": "BSD-2-Clause",
+    "file": "domhandler-5.0.3-LICENSE",
+    "sha256": "cb992345949ccd6e8394b2cd6c465f7b897c864f845937dbf64e8997f389e164",
+    "source": "https://registry.npmjs.org/domhandler/-/domhandler-5.0.3.tgz"
+  },
+  {
+    "package": "domelementtype",
+    "version": "2.3.0",
+    "license": "BSD-2-Clause",
+    "file": "domelementtype-2.3.0-LICENSE",
+    "sha256": "cb992345949ccd6e8394b2cd6c465f7b897c864f845937dbf64e8997f389e164",
+    "source": "https://registry.npmjs.org/domelementtype/-/domelementtype-2.3.0.tgz"
+  },
+  {
+    "package": "nth-check",
+    "version": "2.1.1",
+    "license": "BSD-2-Clause",
+    "file": "nth-check-2.1.1-LICENSE",
+    "sha256": "cb992345949ccd6e8394b2cd6c465f7b897c864f845937dbf64e8997f389e164",
+    "source": "https://registry.npmjs.org/nth-check/-/nth-check-2.1.1.tgz"
+  },
+  {
+    "package": "domutils",
+    "version": "3.2.2",
+    "license": "BSD-2-Clause",
+    "file": "domutils-3.2.2-LICENSE",
+    "sha256": "cb992345949ccd6e8394b2cd6c465f7b897c864f845937dbf64e8997f389e164",
+    "source": "https://registry.npmjs.org/domutils/-/domutils-3.2.2.tgz"
+  },
+  {
+    "package": "dom-serializer",
+    "version": "2.0.0",
+    "license": "MIT",
+    "file": "dom-serializer-2.0.0-LICENSE",
+    "sha256": "94cfe87de9b178e8fee313a19178e625129e2ce559db32e772e7bd95114ee6ff",
+    "source": "https://registry.npmjs.org/dom-serializer/-/dom-serializer-2.0.0.tgz"
+  },
+  {
+    "package": "entities",
+    "version": "4.5.0",
+    "license": "BSD-2-Clause",
+    "file": "entities-4.5.0-LICENSE",
+    "sha256": "cb992345949ccd6e8394b2cd6c465f7b897c864f845937dbf64e8997f389e164",
+    "source": "https://registry.npmjs.org/entities/-/entities-4.5.0.tgz"
+  },
+  {
+    "package": "boolbase",
+    "version": "1.0.0",
+    "license": "ISC",
+    "file": "boolbase-1.0.0-LICENSE",
+    "sha256": "cdf4d87ae0a6c160227263bf4e39a0a10e30e89ae7256e0f7ac7bde0836552c6",
+    "source": "https://github.com/fb55/boolbase/blob/be0bcd8a4e917a0a5895e95b523fbbed05a64871/LICENSE",
+    "note": "Version 1.0.0 declares ISC but omits a license file; upstream full text is supplied here."
+  }
+]
