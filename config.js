@@ -11,4 +11,5 @@ export const siteConfig = Object.freeze({
   licenseUrl: null,
   noticesUrl: null,
   releaseUrl: null,
+  browserUrl: 'https://wondercloud-me.github.io/learning-workbench/learn/',
 });
