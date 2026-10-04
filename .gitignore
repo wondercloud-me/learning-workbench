@@ -1,0 +1,36 @@
+node_modules/
+dist/
+dist-main/
+release/
+.superpowers/
+*.log
+*.tsbuildinfo
+
+.cache/
+resources/speech/
+
+# Local credentials and signing material. Keep documented examples publishable.
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.p12
+*.pfx
+*.p8
+*.key
+*.pem
+.secrets/
+private-keys/
+signing/
+.DS_Store
+
+# User records, backup exports and recordings belong outside source control.
+local-data/
+user-data/
+user-exports/
+user-backups/
+recordings/
+tutorial-cache/
+/state.json
+/models-backup.json
+/learning-backup*.json

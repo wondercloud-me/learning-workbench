@@ -1,0 +1,984 @@
+{
+  "source": "https://www.runoob.com/",
+  "updatedAt": "2026-10-04T03:30:38.790Z",
+  "categories": [
+    {
+      "id": "category-1",
+      "title": "Python / 数据科学",
+      "description": "从 Python 入门到数据处理与分析。",
+      "courses": [
+        {
+          "id": "/python3/python3-tutorial.html",
+          "title": "Python",
+          "description": "Python3 是当前主流 Python 版本。",
+          "url": "https://www.runoob.com/python3/python3-tutorial.html"
+        },
+        {
+          "id": "/python/python-tutorial.html",
+          "title": "Python2.x",
+          "description": "Python 经典版本。",
+          "url": "https://www.runoob.com/python/python-tutorial.html"
+        },
+        {
+          "id": "/fastapi/fastapi-tutorial.html",
+          "title": "FastAPI",
+          "description": "现代高性能 Python API 框架。",
+          "url": "https://www.runoob.com/fastapi/fastapi-tutorial.html"
+        },
+        {
+          "id": "/flask/flask-tutorial.html",
+          "title": "Flask",
+          "description": "轻量级 Python Web 应用框架。",
+          "url": "https://www.runoob.com/flask/flask-tutorial.html"
+        },
+        {
+          "id": "/django/django-tutorial.html",
+          "title": "Django",
+          "description": "全功能 Python Web 开发框架。",
+          "url": "https://www.runoob.com/django/django-tutorial.html"
+        },
+        {
+          "id": "/numpy/numpy-tutorial.html",
+          "title": "NumPy",
+          "description": "Python 科学计算核心库。",
+          "url": "https://www.runoob.com/numpy/numpy-tutorial.html"
+        },
+        {
+          "id": "/pandas/pandas-tutorial.html",
+          "title": "Pandas",
+          "description": "Python 数据分析核心库。",
+          "url": "https://www.runoob.com/pandas/pandas-tutorial.html"
+        },
+        {
+          "id": "/scipy/scipy-tutorial.html",
+          "title": "SciPy",
+          "description": "Python 数学与科学计算工具包。",
+          "url": "https://www.runoob.com/scipy/scipy-tutorial.html"
+        },
+        {
+          "id": "/matplotlib/matplotlib-tutorial.html",
+          "title": "Matplotlib",
+          "description": "Python 数据可视化绘图库。",
+          "url": "https://www.runoob.com/matplotlib/matplotlib-tutorial.html"
+        },
+        {
+          "id": "/dash/dash-tutorial.html",
+          "title": "Dash",
+          "description": "Python 数据分析与可视化 Web 框架。",
+          "url": "https://www.runoob.com/dash/dash-tutorial.html"
+        },
+        {
+          "id": "/jupyter-notebook/jupyter-notebook-tutorial.html",
+          "title": "Jupyter Notebook",
+          "description": "交互式数据分析与计算工具。",
+          "url": "https://www.runoob.com/jupyter-notebook/jupyter-notebook-tutorial.html"
+        },
+        {
+          "id": "/pillow/pillow-tutorial.html",
+          "title": "Pillow",
+          "description": "Python 图像处理库。",
+          "url": "https://www.runoob.com/pillow/pillow-tutorial.html"
+        },
+        {
+          "id": "/qt/qt-tutorial.html",
+          "title": "量化交易",
+          "description": "利用程序化策略进行金融交易。",
+          "url": "https://www.runoob.com/qt/qt-tutorial.html"
+        },
+        {
+          "id": "/r/r-tutorial.html",
+          "title": "R",
+          "description": "用于统计分析与数据科学的编程语言。",
+          "url": "https://www.runoob.com/r/r-tutorial.html"
+        },
+        {
+          "id": "/julia/julia-tutorial.html",
+          "title": "Julia",
+          "description": "面向科学计算的高性能语言。",
+          "url": "https://www.runoob.com/julia/julia-tutorial.html"
+        }
+      ]
+    },
+    {
+      "id": "category-2",
+      "title": "AI / 智能开发",
+      "description": "了解 AI 工具与应用开发。",
+      "courses": [
+        {
+          "id": "/ai-agent/ai-agent-tutorial.html",
+          "title": "AI Agent（智能体）",
+          "description": "AI Agent 让模型不只回答问题，而是按步骤完成动作。",
+          "url": "https://www.runoob.com/ai-agent/ai-agent-tutorial.html"
+        },
+        {
+          "id": "/ai/ai-tutorial.html",
+          "title": "AI（人工智能）",
+          "description": "AI 让计算机具备理解、学习、推理能力。",
+          "url": "https://www.runoob.com/ai/ai-tutorial.html"
+        },
+        {
+          "id": "/codex/codex-tutorial.html",
+          "title": "Codex 教程",
+          "description": "OpenAI 推出的 AI 编程协作工具。",
+          "url": "https://www.runoob.com/codex/codex-tutorial.html"
+        },
+        {
+          "id": "/vibe-coding/vibe-coding-tutorial.html",
+          "title": "Vibe Coding",
+          "description": "Vibe Coding 是全新的软件开发方式。",
+          "url": "https://www.runoob.com/vibe-coding/vibe-coding-tutorial.html"
+        },
+        {
+          "id": "/claude-code/claude-code-tutorial.html",
+          "title": "Claude Code",
+          "description": "Anthropic 推出的 AI 编程协作工具。",
+          "url": "https://www.runoob.com/claude-code/claude-code-tutorial.html"
+        },
+        {
+          "id": "/opencode/opencode-tutorial.html",
+          "title": "OpenCode",
+          "description": "开源 AI 编程协作工具。",
+          "url": "https://www.runoob.com/opencode/opencode-tutorial.html"
+        },
+        {
+          "id": "/skills/skills-tutorial.html",
+          "title": "Skills（技能）",
+          "description": "Skills 让智能体具备特定能力与工作流。",
+          "url": "https://www.runoob.com/skills/skills-tutorial.html"
+        },
+        {
+          "id": "/ollama/ollama-tutorial.html",
+          "title": "Ollama",
+          "description": "开源本地大语言模型运行框架。",
+          "url": "https://www.runoob.com/ollama/ollama-tutorial.html"
+        },
+        {
+          "id": "/hermes-agent/hermes-agent-tutorial.html",
+          "title": "Hermes Agent",
+          "description": "Hermes Agent 是一个开源的自进化 AI Agent",
+          "url": "https://www.runoob.com/hermes-agent/hermes-agent-tutorial.html"
+        },
+        {
+          "id": "/deepseek-harness/deepseek-harness-tutorial.html",
+          "title": "DeepSeek Harness",
+          "description": "DeepSeek Harness 是由深度求索（DeepSeek AI）开发的智能体框架",
+          "url": "https://www.runoob.com/deepseek-harness/deepseek-harness-tutorial.html"
+        },
+        {
+          "id": "/pi-agent/pi-agent-tutorial.html",
+          "title": "Pi Agent",
+          "description": "Pi Agent 是一个轻量级、可扩展的个人 AI Agent 开发框架",
+          "url": "https://www.runoob.com/pi-agent/pi-agent-tutorial.html"
+        },
+        {
+          "id": "/ai-math/ai-math-tutorial.html",
+          "title": "AI 数学基础",
+          "description": "数学是 AI 的骨架，没有数学，AI 只是一个模糊的构想。",
+          "url": "https://www.runoob.com/ai-math/ai-math-tutorial.html"
+        },
+        {
+          "id": "/tensorflow/tensorflow-tutorial.html",
+          "title": "TensorFlow",
+          "description": "TensorFlow 是一个开源机器学习框架。",
+          "url": "https://www.runoob.com/tensorflow/tensorflow-tutorial.html"
+        },
+        {
+          "id": "/pytorch/pytorch-tutorial.html",
+          "title": "PyTorch",
+          "description": "PyTorch 是一个开源机器学习框架。",
+          "url": "https://www.runoob.com/pytorch/pytorch-tutorial.html"
+        },
+        {
+          "id": "/sklearn/sklearn-tutorial.html",
+          "title": "Scikit-learn",
+          "description": "Scikit-learn 是一个开源机器学习库。",
+          "url": "https://www.runoob.com/sklearn/sklearn-tutorial.html"
+        },
+        {
+          "id": "/ml/ml-tutorial.html",
+          "title": "机器学习",
+          "description": "机器学习是让机器通过数据进行预测与决策。",
+          "url": "https://www.runoob.com/ml/ml-tutorial.html"
+        },
+        {
+          "id": "/langchain/langchain-tutorial.html",
+          "title": "LangChain",
+          "description": "用于构建基于大语言模型的应用程序的框架。",
+          "url": "https://www.runoob.com/langchain/langchain-tutorial.html"
+        },
+        {
+          "id": "/nlp/nlp-tutorial.html",
+          "title": "自然语言处理 NLP",
+          "description": "自然语言处理是人工智能与语言学的交叉领域。",
+          "url": "https://www.runoob.com/nlp/nlp-tutorial.html"
+        },
+        {
+          "id": "/opencv/opencv-tutorial.html",
+          "title": "OpenCV",
+          "description": "开源计算机视觉与机器学习软件库。",
+          "url": "https://www.runoob.com/opencv/opencv-tutorial.html"
+        },
+        {
+          "id": "/selenium/selenium-tutorial.html",
+          "title": "Selenium",
+          "description": "自动化 Web 浏览器操作工具。",
+          "url": "https://www.runoob.com/selenium/selenium-tutorial.html"
+        },
+        {
+          "id": "/playwright/playwright-tutorial.html",
+          "title": "Playwright",
+          "description": "现代 Web 自动化与端到端测试框架。",
+          "url": "https://www.runoob.com/playwright/playwright-tutorial.html"
+        }
+      ]
+    },
+    {
+      "id": "category-3",
+      "title": "前端开发",
+      "description": "制作网页界面与交互。",
+      "courses": [
+        {
+          "id": "/html/html-tutorial.html",
+          "title": "HTML",
+          "description": "HTML 是网页的标准标记语言。",
+          "url": "https://www.runoob.com/html/html-tutorial.html"
+        },
+        {
+          "id": "/html/html5-intro.html",
+          "title": "HTML5",
+          "description": "下一代 HTML 标准。",
+          "url": "https://www.runoob.com/html/html5-intro.html"
+        },
+        {
+          "id": "/css/css-tutorial.html",
+          "title": "CSS",
+          "description": "网页样式与布局语言。",
+          "url": "https://www.runoob.com/css/css-tutorial.html"
+        },
+        {
+          "id": "/css3/css3-tutorial.html",
+          "title": "CSS3",
+          "description": "CSS3 是 CSS 技术升级版本。",
+          "url": "https://www.runoob.com/css3/css3-tutorial.html"
+        },
+        {
+          "id": "/js/js-tutorial.html",
+          "title": "JavaScript",
+          "description": "Web 核心编程语言。",
+          "url": "https://www.runoob.com/js/js-tutorial.html"
+        },
+        {
+          "id": "/htmldom/htmldom-tutorial.html",
+          "title": "HTML DOM",
+          "description": "HTML DOM 定义了访问和操作 HTML 文档的标准方法。",
+          "url": "https://www.runoob.com/htmldom/htmldom-tutorial.html"
+        },
+        {
+          "id": "/typescript/ts-tutorial.html",
+          "title": "TypeScript",
+          "description": "JavaScript 的超集语言。",
+          "url": "https://www.runoob.com/typescript/ts-tutorial.html"
+        },
+        {
+          "id": "/ajax/ajax-tutorial.html",
+          "title": "AJAX",
+          "description": "异步 Web 数据交互技术。",
+          "url": "https://www.runoob.com/ajax/ajax-tutorial.html"
+        },
+        {
+          "id": "/json/json-tutorial.html",
+          "title": "JSON",
+          "description": "数据交换标准格式。",
+          "url": "https://www.runoob.com/json/json-tutorial.html"
+        },
+        {
+          "id": "/tailwindcss/tailwindcss-tutorial.html",
+          "title": "Tailwind CSS",
+          "description": "实用优先 CSS 框架。",
+          "url": "https://www.runoob.com/tailwindcss/tailwindcss-tutorial.html"
+        },
+        {
+          "id": "/bootstrap4/bootstrap4-tutorial.html",
+          "title": "Bootstrap4",
+          "description": "经典响应式前端框架。",
+          "url": "https://www.runoob.com/bootstrap4/bootstrap4-tutorial.html"
+        },
+        {
+          "id": "/bootstrap5/bootstrap5-tutorial.html",
+          "title": "Bootstrap5",
+          "description": "最新 Bootstrap 前端框架。",
+          "url": "https://www.runoob.com/bootstrap5/bootstrap5-tutorial.html"
+        },
+        {
+          "id": "/foundation/foundation-tutorial.html",
+          "title": "Foundation",
+          "description": "响应式 HTML、CSS 与 JavaScript 框架。",
+          "url": "https://www.runoob.com/foundation/foundation-tutorial.html"
+        },
+        {
+          "id": "/vue2/vue-tutorial.html",
+          "title": "Vue.js",
+          "description": "渐进式前端框架。",
+          "url": "https://www.runoob.com/vue2/vue-tutorial.html"
+        },
+        {
+          "id": "/vue3/vue3-tutorial.html",
+          "title": "Vue3",
+          "description": "新一代 Vue 前端框架。",
+          "url": "https://www.runoob.com/vue3/vue3-tutorial.html"
+        },
+        {
+          "id": "/react/react-tutorial.html",
+          "title": "React",
+          "description": "用于构建 UI 的 JavaScript 库。",
+          "url": "https://www.runoob.com/react/react-tutorial.html"
+        },
+        {
+          "id": "/nextjs/nextjs-tutorial.html",
+          "title": "Next.js",
+          "description": "基于 React 的全栈框架。",
+          "url": "https://www.runoob.com/nextjs/nextjs-tutorial.html"
+        },
+        {
+          "id": "/angularjs/angularjs-tutorial.html",
+          "title": "AngularJS",
+          "description": "Google 推出的经典前端框架。",
+          "url": "https://www.runoob.com/angularjs/angularjs-tutorial.html"
+        },
+        {
+          "id": "/angularjs2/angularjs2-tutorial.html",
+          "title": "Angular",
+          "description": "现代 Angular 前端框架。",
+          "url": "https://www.runoob.com/angularjs2/angularjs2-tutorial.html"
+        },
+        {
+          "id": "/jquery/jquery-tutorial.html",
+          "title": "jQuery",
+          "description": "经典 JavaScript 工具库。",
+          "url": "https://www.runoob.com/jquery/jquery-tutorial.html"
+        },
+        {
+          "id": "/jqueryui/jqueryui-tutorial.html",
+          "title": "jQuery UI",
+          "description": "基于 jQuery 的 UI 组件库。",
+          "url": "https://www.runoob.com/jqueryui/jqueryui-tutorial.html"
+        },
+        {
+          "id": "/jeasyui/jqueryeasyui-tutorial.html",
+          "title": "jQuery EasyUI",
+          "description": "基于 jQuery 的 UI 框架。",
+          "url": "https://www.runoob.com/jeasyui/jqueryeasyui-tutorial.html"
+        },
+        {
+          "id": "/echarts/echarts-tutorial.html",
+          "title": "ECharts",
+          "description": "开源数据可视化图表库。",
+          "url": "https://www.runoob.com/echarts/echarts-tutorial.html"
+        },
+        {
+          "id": "/chartjs/chartjs-tutorial.html",
+          "title": "Chart.js",
+          "description": "轻量级 JavaScript 图表库。",
+          "url": "https://www.runoob.com/chartjs/chartjs-tutorial.html"
+        },
+        {
+          "id": "/highcharts/highcharts-tutorial.html",
+          "title": "Highcharts",
+          "description": "高级交互式图表库。",
+          "url": "https://www.runoob.com/highcharts/highcharts-tutorial.html"
+        },
+        {
+          "id": "/googleapi/google-maps-basic.html",
+          "title": "Google 地图",
+          "description": "Google Maps API 使用教程。",
+          "url": "https://www.runoob.com/googleapi/google-maps-basic.html"
+        },
+        {
+          "id": "/svg/svg-tutorial.html",
+          "title": "SVG",
+          "description": "基于 XML 的矢量图格式。",
+          "url": "https://www.runoob.com/svg/svg-tutorial.html"
+        },
+        {
+          "id": "/font-awesome/fontawesome-tutorial.html",
+          "title": "Font Awesome",
+          "description": "流行图标字体库。",
+          "url": "https://www.runoob.com/font-awesome/fontawesome-tutorial.html"
+        }
+      ]
+    },
+    {
+      "id": "category-4",
+      "title": "后端开发",
+      "description": "编写服务、接口与后端应用。",
+      "courses": [
+        {
+          "id": "/nodejs/nodejs-tutorial.html",
+          "title": "Node.js",
+          "description": "服务端 JavaScript 运行环境。",
+          "url": "https://www.runoob.com/nodejs/nodejs-tutorial.html"
+        },
+        {
+          "id": "/electron/electron-tutorial.html",
+          "title": "Electron",
+          "description": "基于 Web 技术开发跨平台桌面应用。",
+          "url": "https://www.runoob.com/electron/electron-tutorial.html"
+        },
+        {
+          "id": "/php/php-tutorial.html",
+          "title": "PHP",
+          "description": "经典 Web 服务端语言。",
+          "url": "https://www.runoob.com/php/php-tutorial.html"
+        },
+        {
+          "id": "/java/java-tutorial.html",
+          "title": "Java",
+          "description": "企业级开发主流语言。",
+          "url": "https://www.runoob.com/java/java-tutorial.html"
+        },
+        {
+          "id": "/go/go-tutorial.html",
+          "title": "Go",
+          "description": "Google 推出的现代服务端语言。",
+          "url": "https://www.runoob.com/go/go-tutorial.html"
+        },
+        {
+          "id": "/rust/rust-tutorial.html",
+          "title": "Rust",
+          "description": "高性能系统级编程语言。",
+          "url": "https://www.runoob.com/rust/rust-tutorial.html"
+        },
+        {
+          "id": "/csharp/csharp-tutorial.html",
+          "title": "C#",
+          "description": ".NET 核心开发语言。",
+          "url": "https://www.runoob.com/csharp/csharp-tutorial.html"
+        },
+        {
+          "id": "/servlet/servlet-tutorial.html",
+          "title": "Servlet",
+          "description": "Java Web 服务端技术。",
+          "url": "https://www.runoob.com/servlet/servlet-tutorial.html"
+        },
+        {
+          "id": "/jsp/jsp-tutorial.html",
+          "title": "JSP",
+          "description": "Java 服务端页面技术。",
+          "url": "https://www.runoob.com/jsp/jsp-tutorial.html"
+        },
+        {
+          "id": "/asp/asp-tutorial.html",
+          "title": "ASP",
+          "description": "经典动态服务器页面技术。",
+          "url": "https://www.runoob.com/asp/asp-tutorial.html"
+        },
+        {
+          "id": "/appml/appml-tutorial.html",
+          "title": "AppML",
+          "description": "轻量级 Web 应用框架。",
+          "url": "https://www.runoob.com/appml/appml-tutorial.html"
+        },
+        {
+          "id": "/vbscript/vbscript-tutorial.html",
+          "title": "VBScript",
+          "description": "微软经典脚本语言。",
+          "url": "https://www.runoob.com/vbscript/vbscript-tutorial.html"
+        },
+        {
+          "id": "/swagger/swagger-tutorial.html",
+          "title": "Swagger",
+          "description": "API 文档与测试工具。",
+          "url": "https://www.runoob.com/swagger/swagger-tutorial.html"
+        },
+        {
+          "id": "/restfulapi/restful-api-tutorial.html",
+          "title": "RESTful API",
+          "description": "现代 API 设计规范。",
+          "url": "https://www.runoob.com/restfulapi/restful-api-tutorial.html"
+        },
+        {
+          "id": "/docker/docker-tutorial.html",
+          "title": "Docker",
+          "description": "容器化应用部署平台。",
+          "url": "https://www.runoob.com/docker/docker-tutorial.html"
+        },
+        {
+          "id": "/linux/linux-tutorial.html",
+          "title": "Linux",
+          "description": "主流服务器操作系统。",
+          "url": "https://www.runoob.com/linux/linux-tutorial.html"
+        },
+        {
+          "id": "/w3cnote/zookeeper-tutorial.html",
+          "title": "ZooKeeper",
+          "description": "分布式协调服务。",
+          "url": "https://www.runoob.com/w3cnote/zookeeper-tutorial.html"
+        }
+      ]
+    },
+    {
+      "id": "category-5",
+      "title": "数据库",
+      "description": "保存、查询和管理数据。",
+      "courses": [
+        {
+          "id": "/sql/sql-tutorial.html",
+          "title": "SQL",
+          "description": "结构化查询语言。",
+          "url": "https://www.runoob.com/sql/sql-tutorial.html"
+        },
+        {
+          "id": "/mysql/mysql-tutorial.html",
+          "title": "MySQL",
+          "description": "流行关系型数据库。",
+          "url": "https://www.runoob.com/mysql/mysql-tutorial.html"
+        },
+        {
+          "id": "/postgresql/postgresql-tutorial.html",
+          "title": "PostgreSQL",
+          "description": "高级开源关系型数据库。",
+          "url": "https://www.runoob.com/postgresql/postgresql-tutorial.html"
+        },
+        {
+          "id": "/sqlite/sqlite-tutorial.html",
+          "title": "SQLite",
+          "description": "轻量级嵌入式数据库。",
+          "url": "https://www.runoob.com/sqlite/sqlite-tutorial.html"
+        },
+        {
+          "id": "/mongodb/mongodb-tutorial.html",
+          "title": "MongoDB",
+          "description": "主流 NoSQL 数据库。",
+          "url": "https://www.runoob.com/mongodb/mongodb-tutorial.html"
+        },
+        {
+          "id": "/redis/redis-tutorial.html",
+          "title": "Redis",
+          "description": "高性能内存数据库。",
+          "url": "https://www.runoob.com/redis/redis-tutorial.html"
+        },
+        {
+          "id": "/Memcached/Memcached-tutorial.html",
+          "title": "Memcached",
+          "description": "分布式缓存系统。",
+          "url": "https://www.runoob.com/Memcached/Memcached-tutorial.html"
+        }
+      ]
+    },
+    {
+      "id": "category-6",
+      "title": "移动开发",
+      "description": "开发手机与跨平台应用。",
+      "courses": [
+        {
+          "id": "/w3cnote/android-tutorial-intro.html",
+          "title": "Android",
+          "description": "Android 移动开发平台。",
+          "url": "https://www.runoob.com/w3cnote/android-tutorial-intro.html"
+        },
+        {
+          "id": "/flutter/flutter-tutorial.html",
+          "title": "Flutter",
+          "description": "Google 跨平台 UI 框架。",
+          "url": "https://www.runoob.com/flutter/flutter-tutorial.html"
+        },
+        {
+          "id": "/ionic/ionic-tutorial.html",
+          "title": "Ionic",
+          "description": "HTML5 混合移动开发框架。",
+          "url": "https://www.runoob.com/ionic/ionic-tutorial.html"
+        },
+        {
+          "id": "/jquerymobile/jquerymobile-tutorial.html",
+          "title": "jQuery Mobile",
+          "description": "移动端 Web UI 框架。",
+          "url": "https://www.runoob.com/jquerymobile/jquerymobile-tutorial.html"
+        },
+        {
+          "id": "/swift/swift-tutorial.html",
+          "title": "Swift",
+          "description": "Apple 官方开发语言。",
+          "url": "https://www.runoob.com/swift/swift-tutorial.html"
+        },
+        {
+          "id": "/kotlin/kotlin-tutorial.html",
+          "title": "Kotlin",
+          "description": "Android 官方开发语言。",
+          "url": "https://www.runoob.com/kotlin/kotlin-tutorial.html"
+        }
+      ]
+    },
+    {
+      "id": "category-7",
+      "title": "DevOps / 工程化",
+      "description": "运行、测试、部署与管理项目。",
+      "courses": [
+        {
+          "id": "/git/git-tutorial.html",
+          "title": "Git",
+          "description": "分布式版本控制系统。",
+          "url": "https://www.runoob.com/git/git-tutorial.html"
+        },
+        {
+          "id": "/svn/svn-tutorial.html",
+          "title": "SVN",
+          "description": "集中式版本控制系统。",
+          "url": "https://www.runoob.com/svn/svn-tutorial.html"
+        },
+        {
+          "id": "/cmake/cmake-tutorial.html",
+          "title": "CMake",
+          "description": "跨平台构建工具。",
+          "url": "https://www.runoob.com/cmake/cmake-tutorial.html"
+        },
+        {
+          "id": "/maven/maven-tutorial.html",
+          "title": "Maven",
+          "description": "Java 项目构建工具。",
+          "url": "https://www.runoob.com/maven/maven-tutorial.html"
+        },
+        {
+          "id": "/vscode/vscode-tutorial.html",
+          "title": "VS Code",
+          "description": "现代代码编辑器。",
+          "url": "https://www.runoob.com/vscode/vscode-tutorial.html"
+        },
+        {
+          "id": "/obsidian/obsidian-tutorial.html",
+          "title": "Obsidian",
+          "description": "现代化笔记应用。",
+          "url": "https://www.runoob.com/obsidian/obsidian-tutorial.html"
+        },
+        {
+          "id": "/pycharm/pycharm-tutorial.html",
+          "title": "PyCharm",
+          "description": "Python 专业 IDE。",
+          "url": "https://www.runoob.com/pycharm/pycharm-tutorial.html"
+        },
+        {
+          "id": "/eclipse/eclipse-tutorial.html",
+          "title": "Eclipse",
+          "description": "经典 Java IDE。",
+          "url": "https://www.runoob.com/eclipse/eclipse-tutorial.html"
+        },
+        {
+          "id": "/markdown/md-tutorial.html",
+          "title": "Markdown",
+          "description": "轻量级标记语言。",
+          "url": "https://www.runoob.com/markdown/md-tutorial.html"
+        },
+        {
+          "id": "/latex/latex-tutorial.html",
+          "title": "LaTeX",
+          "description": "高质量文档排版系统。",
+          "url": "https://www.runoob.com/latex/latex-tutorial.html"
+        }
+      ]
+    },
+    {
+      "id": "category-8",
+      "title": "编程语言",
+      "description": "选择一门语言，从语法到程序。",
+      "courses": [
+        {
+          "id": "/c/c-tutorial.html",
+          "title": "C",
+          "description": "经典系统级编程语言。",
+          "url": "https://www.runoob.com/c/c-tutorial.html"
+        },
+        {
+          "id": "/cplusplus/cpp-tutorial.html",
+          "title": "C++",
+          "description": "高性能通用编程语言。",
+          "url": "https://www.runoob.com/cplusplus/cpp-tutorial.html"
+        },
+        {
+          "id": "/zig/zig-tutorial.html",
+          "title": "Zig",
+          "description": "现代系统级编程语言。",
+          "url": "https://www.runoob.com/zig/zig-tutorial.html"
+        },
+        {
+          "id": "/scala/scala-tutorial.html",
+          "title": "Scala",
+          "description": "运行于 JVM 的多范式语言。",
+          "url": "https://www.runoob.com/scala/scala-tutorial.html"
+        },
+        {
+          "id": "/ruby/ruby-tutorial.html",
+          "title": "Ruby",
+          "description": "优雅简洁的脚本语言。",
+          "url": "https://www.runoob.com/ruby/ruby-tutorial.html"
+        },
+        {
+          "id": "/perl/perl-tutorial.html",
+          "title": "Perl",
+          "description": "经典文本处理语言。",
+          "url": "https://www.runoob.com/perl/perl-tutorial.html"
+        },
+        {
+          "id": "/lua/lua-tutorial.html",
+          "title": "Lua",
+          "description": "轻量级嵌入式脚本语言。",
+          "url": "https://www.runoob.com/lua/lua-tutorial.html"
+        },
+        {
+          "id": "/dart/dart-tutorial.html",
+          "title": "Dart",
+          "description": "Google 开发的客户端优化语言。",
+          "url": "https://www.runoob.com/dart/dart-tutorial.html"
+        },
+        {
+          "id": "/assembly/assembly-tutorial.html",
+          "title": "汇编语言",
+          "description": "面向硬件的低级语言。",
+          "url": "https://www.runoob.com/assembly/assembly-tutorial.html"
+        },
+        {
+          "id": "/w3cnote/verilog-tutorial.html",
+          "title": "Verilog",
+          "description": "数字电路硬件描述语言。",
+          "url": "https://www.runoob.com/w3cnote/verilog-tutorial.html"
+        }
+      ]
+    },
+    {
+      "id": "category-9",
+      "title": "计算机基础",
+      "description": "理解算法、网络与计算机机制。",
+      "courses": [
+        {
+          "id": "/computer-organization/computer-organization-tutorial.html",
+          "title": "计算机组成原理",
+          "description": "计算机硬件结构与工作原理。",
+          "url": "https://www.runoob.com/computer-organization/computer-organization-tutorial.html"
+        },
+        {
+          "id": "/data-structures/data-structures-tutorial.html",
+          "title": "数据结构与算法",
+          "description": "计算机核心基础知识。",
+          "url": "https://www.runoob.com/data-structures/data-structures-tutorial.html"
+        },
+        {
+          "id": "/c-dsa/c-dsa-tutorial.html",
+          "title": "C 语言数据结构与算法",
+          "description": "计算机核心基础知识。",
+          "url": "https://www.runoob.com/c-dsa/c-dsa-tutorial.html"
+        },
+        {
+          "id": "/design-pattern/design-pattern-tutorial.html",
+          "title": "设计模式",
+          "description": "经典软件设计思想。",
+          "url": "https://www.runoob.com/design-pattern/design-pattern-tutorial.html"
+        },
+        {
+          "id": "/python-design-pattern/python-design-pattern-tutorial.html",
+          "title": "Python 设计模式",
+          "description": "Python 面向对象设计实践。",
+          "url": "https://www.runoob.com/python-design-pattern/python-design-pattern-tutorial.html"
+        },
+        {
+          "id": "/regexp/regexp-tutorial.html",
+          "title": "正则表达式",
+          "description": "字符串匹配与文本处理。",
+          "url": "https://www.runoob.com/regexp/regexp-tutorial.html"
+        },
+        {
+          "id": "/http/http-tutorial.html",
+          "title": "HTTP",
+          "description": "Web 通信协议。",
+          "url": "https://www.runoob.com/http/http-tutorial.html"
+        },
+        {
+          "id": "/tcpip/tcpip-tutorial.html",
+          "title": "TCP/IP",
+          "description": "互联网通信协议族。",
+          "url": "https://www.runoob.com/tcpip/tcpip-tutorial.html"
+        },
+        {
+          "id": "/np/np-tutorial.html",
+          "title": "网络协议",
+          "description": "计算机网络通信规则。",
+          "url": "https://www.runoob.com/np/np-tutorial.html"
+        },
+        {
+          "id": "/w3c/w3c-tutorial.html",
+          "title": "W3C",
+          "description": "Web 标准组织。",
+          "url": "https://www.runoob.com/w3c/w3c-tutorial.html"
+        }
+      ]
+    },
+    {
+      "id": "category-10",
+      "title": "XML / Web Service",
+      "description": "了解数据交换与 Web 服务。",
+      "courses": [
+        {
+          "id": "/xml/xml-tutorial.html",
+          "title": "XML",
+          "description": "数据交换与存储格式。",
+          "url": "https://www.runoob.com/xml/xml-tutorial.html"
+        },
+        {
+          "id": "/dtd/dtd-tutorial.html",
+          "title": "DTD",
+          "description": "XML 文档类型定义。",
+          "url": "https://www.runoob.com/dtd/dtd-tutorial.html"
+        },
+        {
+          "id": "/dom/dom-tutorial.html",
+          "title": "XML DOM",
+          "description": "XML 文档操作标准。",
+          "url": "https://www.runoob.com/dom/dom-tutorial.html"
+        },
+        {
+          "id": "/xsl/xsl-tutorial.html",
+          "title": "XSLT",
+          "description": "XML 转换语言。",
+          "url": "https://www.runoob.com/xsl/xsl-tutorial.html"
+        },
+        {
+          "id": "/xpath/xpath-tutorial.html",
+          "title": "XPath",
+          "description": "XML 节点查询语言。",
+          "url": "https://www.runoob.com/xpath/xpath-tutorial.html"
+        },
+        {
+          "id": "/xquery/xquery-tutorial.html",
+          "title": "XQuery",
+          "description": "XML 查询语言。",
+          "url": "https://www.runoob.com/xquery/xquery-tutorial.html"
+        },
+        {
+          "id": "/xlink/xlink-tutorial.html",
+          "title": "XLink",
+          "description": "XML 超链接标准。",
+          "url": "https://www.runoob.com/xlink/xlink-tutorial.html"
+        },
+        {
+          "id": "/xlink/xlink-tutorial.html",
+          "title": "XPointer",
+          "description": "XML 数据定位语言。",
+          "url": "https://www.runoob.com/xlink/xlink-tutorial.html"
+        },
+        {
+          "id": "/schema/schema-tutorial.html",
+          "title": "XML Schema",
+          "description": "XML 文档结构定义。",
+          "url": "https://www.runoob.com/schema/schema-tutorial.html"
+        },
+        {
+          "id": "/xslfo/xslfo-tutorial.html",
+          "title": "XSL-FO",
+          "description": "XML 格式化对象语言。",
+          "url": "https://www.runoob.com/xslfo/xslfo-tutorial.html"
+        },
+        {
+          "id": "/webservices/webservices-tutorial.html",
+          "title": "Web Service",
+          "description": "基于网络的服务接口技术。",
+          "url": "https://www.runoob.com/webservices/webservices-tutorial.html"
+        },
+        {
+          "id": "/wsdl/wsdl-tutorial.html",
+          "title": "WSDL",
+          "description": "Web Service 描述语言。",
+          "url": "https://www.runoob.com/wsdl/wsdl-tutorial.html"
+        },
+        {
+          "id": "/soap/soap-tutorial.html",
+          "title": "SOAP",
+          "description": "基于 XML 的通信协议。",
+          "url": "https://www.runoob.com/soap/soap-tutorial.html"
+        },
+        {
+          "id": "/rss/rss-tutorial.html",
+          "title": "RSS",
+          "description": "内容聚合订阅协议。",
+          "url": "https://www.runoob.com/rss/rss-tutorial.html"
+        },
+        {
+          "id": "/rdf/rdf-tutorial.html",
+          "title": "RDF",
+          "description": "资源描述框架。",
+          "url": "https://www.runoob.com/rdf/rdf-tutorial.html"
+        }
+      ]
+    },
+    {
+      "id": "category-11",
+      "title": ".NET",
+      "description": "学习 .NET 平台开发。",
+      "courses": [
+        {
+          "id": "/aspnet/aspnet-tutorial.html",
+          "title": "ASP.NET",
+          "description": ".NET Web 开发框架。",
+          "url": "https://www.runoob.com/aspnet/aspnet-tutorial.html"
+        },
+        {
+          "id": "/aspnet/mvc-intro.html",
+          "title": "MVC",
+          "description": "MVC 架构模式。",
+          "url": "https://www.runoob.com/aspnet/mvc-intro.html"
+        },
+        {
+          "id": "/aspnet/razor-intro.html",
+          "title": "Razor",
+          "description": ".NET 模板引擎。",
+          "url": "https://www.runoob.com/aspnet/razor-intro.html"
+        },
+        {
+          "id": "/aspnet/aspnet-intro.html",
+          "title": "Web Forms",
+          "description": "经典 ASP.NET 开发模式。",
+          "url": "https://www.runoob.com/aspnet/aspnet-intro.html"
+        },
+        {
+          "id": "/aspnet/webpages-intro.html",
+          "title": "Web Pages",
+          "description": "ASP.NET Web Pages 开发模式。",
+          "url": "https://www.runoob.com/aspnet/webpages-intro.html"
+        },
+        {
+          "id": "/powershell/powershell-tutorial.html",
+          "title": "PowerShell",
+          "description": "微软自动化脚本环境。",
+          "url": "https://www.runoob.com/powershell/powershell-tutorial.html"
+        }
+      ]
+    },
+    {
+      "id": "category-12",
+      "title": "网站建设",
+      "description": "搭建并维护网站。",
+      "courses": [
+        {
+          "id": "/web/web-buildingprimer.html",
+          "title": "网站建设指南",
+          "description": "网站开发与建设基础教程。",
+          "url": "https://www.runoob.com/web/web-buildingprimer.html"
+        },
+        {
+          "id": "/browsers/browser-information.html",
+          "title": "浏览器信息",
+          "description": "浏览器市场与兼容性信息。",
+          "url": "https://www.runoob.com/browsers/browser-information.html"
+        },
+        {
+          "id": "/hosting/hosting-tutorial.html",
+          "title": "网站主机教程",
+          "description": "网站部署与服务器托管。",
+          "url": "https://www.runoob.com/hosting/hosting-tutorial.html"
+        },
+        {
+          "id": "/quality/quality-tutorial.html",
+          "title": "网站品质",
+          "description": "构建高质量网站。",
+          "url": "https://www.runoob.com/quality/quality-tutorial.html"
+        }
+      ]
+    }
+  ]
+}

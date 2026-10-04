@@ -1,0 +1,269 @@
+import { constants } from 'node:fs';
+import { lstat, mkdir, open, readdir, realpath, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { homedir } from 'node:os';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+
+// Explicitly selected files are exported from the current working tree, never Git history.
+const rootFiles = new Set([
+  '.gitignore', 'README.md', 'LICENSE', 'THIRD_PARTY_NOTICES.md', 'CONTRIBUTING.md',
+  'SECURITY.md', 'CHANGELOG.md', 'package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml',
+  'index.html', 'tsconfig.json', 'tsconfig.node.json', 'vite.config.ts', 'vitest.config.ts',
+]);
+const publicDocs = new Set(['docs/public-source.md']);
+const extensions = {
+  src: new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.css', '.json', '.html', '.svg']),
+  tests: new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.json', '.html', '.txt']),
+  scripts: new Set(['.mjs', '.cjs', '.js', '.ts', '.py', '.sh', '.ps1']),
+  assets: new Set(['.png', '.icns', '.ico', '.svg', '.plist', '.jpg', '.jpeg', '.webp', '.gif']),
+  licenses: new Set(['.md', '.txt', '.json', '.html']),
+  website: new Set(['.html', '.css', '.js', '.mjs', '.json', '.md', '.svg', '.png', '.ico', '.jpg', '.jpeg', '.webp', '.gif', '.txt']),
+  '.github': new Set(['.yml', '.yaml', '.md', '.json']),
+};
+const excludedDirectories = new Set([
+  '.git', '.cache', 'node_modules', 'userdata', 'user-data', 'personal', 'private',
+  'backups', 'backup', 'exports', 'tutorial-cache', 'credentials', 'secrets', 'signing',
+  'resources', 'release', 'dist', 'dist-main', '__pycache__',
+]);
+const excludedFiles = /^(?:\.env(?:\..*)?|\.DS_Store|state\.json|models(?:-backup)?\.json|(?:credentials|secrets|backup)\.(?:json|ya?ml|txt)|.*\.(?:pem|key|p12|pfx|p8|sqlite|sqlite3|db|bak))$/i;
+const maxFileBytes = 8 * 1024 * 1024;
+const maxTotalBytes = 64 * 1024 * 1024;
+const manifestName = 'PUBLIC_SOURCE_MANIFEST.json';
+
+class ExportError extends Error {}
+
+function reject(reason, relative) {
+  // Never put file contents, source roots, credentials or raw OS errors in diagnostics.
+  const name = relative?.replace(/[^A-Za-z0-9._@+ /-]/g, '?');
+  throw new ExportError(`Public export rejected: ${reason}${name ? ` (${name})` : ''}`);
+}
+
+function inside(parent, child) {
+  const relative = path.relative(parent, child);
+  return relative === '' || (!relative.startsWith(`..${path.sep}`) && relative !== '..' && !path.isAbsolute(relative));
+}
+
+async function statIfPresent(file) {
+  try { return await lstat(file); }
+  catch (error) { if (error.code === 'ENOENT') return null; throw error; }
+}
+
+function allowedName(name) {
+  return /^[A-Za-z0-9][A-Za-z0-9._@+-]*$/.test(name);
+}
+
+function allowedType(relative) {
+  const [root] = relative.split('/');
+  const name = path.posix.basename(relative);
+  return extensions[root]?.has(path.posix.extname(name).toLowerCase())
+    || (root === 'licenses' && /(?:^|[-.])(?:LICENSE|COPYING|NOTICE|AUTHORS)(?:-[A-Z0-9-]+)?$/i.test(name));
+}
+
+function scanContents(relative, buffer) {
+  // Scan all selected bytes, including images, so a renamed key is not a loophole.
+  const contents = buffer.toString('utf8');
+  const patterns = [
+    /\bsk-(?:(?:proj|ant-api\d+|ant)-)?[A-Za-z0-9_-]{28,}\b/,
+    /\b(?:gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{40,})\b/,
+    /\b(?:AKIA|ASIA)[A-Z0-9]{16}\b/,
+    /\bAIza[A-Za-z0-9_-]{35}\b/,
+    /\bxox[baprs]-[A-Za-z0-9-]{20,}\b/,
+    /\b(?:sk|rk)_live_[A-Za-z0-9]{20,}\b/,
+    /-----BEGIN (?:[A-Z0-9]+ )?PRIVATE KEY-----/,
+  ];
+  if (patterns.some(pattern => pattern.test(contents))) reject('credential pattern', relative);
+  for (const match of contents.matchAll(/https?:\/\/([^\s/:"'<>]+):([^\s/@"'<>]+)@([^\s/"'<>]+)/gi)) {
+    const host = match[3].replace(/:\d+$/, '').toLowerCase();
+    const reservedHost = /^(?:[a-z0-9-]+\.)*example\.(?:com|org|net)$/.test(host)
+      || /\.(?:test|invalid|example)$/.test(host);
+    const loopbackHost = /^(?:localhost|127\.0\.0\.1)$/.test(host);
+    const fixturePair = match[1] === 'x' && match[2] === 'y';
+    if (!reservedHost && !(relative.startsWith('tests/') && (loopbackHost || fixturePair))) reject('credential URL', relative);
+  }
+  // Test fixtures may use conventional fictional accounts; the actual host account is never exempt.
+  const currentAccount = path.basename(homedir()).toLowerCase();
+  const fakeAccounts = new Set(['alice', 'bob', 'user', 'learner', 'example', 'test', 'tester']);
+  const homePaths = /(?:\/(?:Users|home)\/|[A-Za-z]:[\\/]+Users[\\/]+)([^\s/\\"'`<>]+)/gi;
+  for (const match of contents.matchAll(homePaths)) {
+    const account = match[1].toLowerCase();
+    if (!(relative.startsWith('tests/') && fakeAccounts.has(account) && account !== currentAccount)) {
+      reject('personal home path', relative);
+    }
+  }
+  const extension = path.posix.extname(relative).toLowerCase();
+  const magic = {
+    '.png': () => buffer.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10])),
+    '.icns': () => buffer.subarray(0, 4).toString('ascii') === 'icns',
+    '.ico': () => buffer.subarray(0, 4).equals(Buffer.from([0, 0, 1, 0])),
+    '.jpg': () => buffer.subarray(0, 3).equals(Buffer.from([255, 216, 255])),
+    '.jpeg': () => buffer.subarray(0, 3).equals(Buffer.from([255, 216, 255])),
+    '.gif': () => /^GIF8[79]a$/.test(buffer.subarray(0, 6).toString('ascii')),
+    '.webp': () => buffer.subarray(0, 4).toString('ascii') === 'RIFF' && buffer.subarray(8, 12).toString('ascii') === 'WEBP',
+  };
+  if (magic[extension] && !magic[extension]()) reject('unexpected binary file type', relative);
+  if (!magic[extension] && contents.includes('\0')) reject('unexpected binary file type', relative);
+}
+
+function validateReadmeLinks(files) {
+  const selected = new Set(files.map(file => file.path));
+  const readme = files.find(file => file.path === 'README.md');
+  if (!readme) reject('missing required file', 'README.md');
+  const text = readme.buffer.toString('utf8');
+  const targets = [
+    ...Array.from(text.matchAll(/!?\[[^\]]*\]\(<?([^\s)>]+)>?(?:\s+"[^"]*")?\)/g), match => match[1]),
+    ...Array.from(text.matchAll(/^\s*\[[^\]]+\]:\s*<?([^\s>]+)>?/gm), match => match[1]),
+  ];
+  for (const target of targets) {
+    if (/^(?:[a-z][a-z0-9+.-]*:|#|\/\/)/i.test(target)) continue;
+    let decoded;
+    try { decoded = decodeURIComponent(target.split(/[?#]/)[0]); }
+    catch { reject('invalid README link', 'README.md'); }
+    const relative = path.posix.normalize(decoded.replace(/:\d+$/, ''));
+    if (selected.has(relative) || [...selected].some(file => file.startsWith(relative.replace(/\/$/, '') + '/'))) continue;
+    reject('README link points outside selected public files', 'README.md');
+  }
+}
+
+async function readSelected(source, relative) {
+  const file = path.join(source, ...relative.split('/'));
+  const stat = await lstat(file);
+  if (stat.isSymbolicLink()) reject('symlink', relative);
+  if (!stat.isFile()) reject('unexpected file type', relative);
+  if (stat.size > maxFileBytes) reject('file size limit', relative);
+  const handle = await open(file, constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0));
+  try {
+    const opened = await handle.stat();
+    const resolved = await realpath(file);
+    const current = await lstat(resolved);
+    if (!inside(source, resolved) || !opened.isFile() || opened.dev !== current.dev || opened.ino !== current.ino) {
+      reject('source path changed or escaped', relative);
+    }
+    if (opened.size > maxFileBytes) reject('file size limit', relative);
+    const buffer = await handle.readFile();
+    if (buffer.length > maxFileBytes) reject('file size limit', relative);
+    scanContents(relative, buffer);
+    return { path: relative, buffer, bytes: buffer.length, sha256: createHash('sha256').update(buffer).digest('hex') };
+  } finally { await handle.close(); }
+}
+
+async function collectFiles(source) {
+  const files = [];
+  async function walk(relative) {
+    const directory = path.join(source, ...relative.split('/'));
+    const stat = await lstat(directory);
+    if (stat.isSymbolicLink()) reject('symlink', relative);
+    if (!stat.isDirectory()) reject('unexpected directory type', relative);
+    for (const entry of (await readdir(directory, { withFileTypes: true })).sort((a, b) => a.name.localeCompare(b.name, 'en'))) {
+      if (excludedDirectories.has(entry.name.toLowerCase()) || excludedFiles.test(entry.name)) continue;
+      const selected = `${relative}/${entry.name}`;
+      if (!allowedName(entry.name)) reject('unexpected pathname', selected);
+      if (entry.isSymbolicLink()) reject('symlink', selected);
+      if (entry.isDirectory()) await walk(selected);
+      else {
+        if (!allowedType(selected)) reject('unexpected file extension', selected);
+        files.push(await readSelected(source, selected));
+      }
+    }
+  }
+  for (const name of [...rootFiles].sort()) {
+    if (await statIfPresent(path.join(source, name))) files.push(await readSelected(source, name));
+  }
+  for (const relative of publicDocs) {
+    const parent = await statIfPresent(path.join(source, 'docs'));
+    if (parent?.isSymbolicLink()) reject('symlink', 'docs');
+    if (await statIfPresent(path.join(source, ...relative.split('/')))) files.push(await readSelected(source, relative));
+  }
+  for (const name of Object.keys(extensions)) {
+    if (await statIfPresent(path.join(source, name))) await walk(name);
+  }
+  files.sort((a, b) => a.path < b.path ? -1 : a.path > b.path ? 1 : 0);
+  for (const required of ['README.md', 'LICENSE', 'package.json', 'pnpm-lock.yaml']) {
+    if (!files.some(file => file.path === required)) reject('missing required file', required);
+  }
+  if (files.reduce((total, file) => total + file.bytes, 0) > maxTotalBytes) reject('total source size limit');
+  validateReadmeLinks(files);
+  return files;
+}
+
+export async function exportPublicSource({ sourceDir = process.cwd(), destination }) {
+  if (!destination) reject('output argument is required');
+  let output;
+  try {
+    const sourceStat = await lstat(path.resolve(sourceDir));
+    if (sourceStat.isSymbolicLink()) reject('symlink source root');
+    if (!sourceStat.isDirectory()) reject('source root must be a directory');
+    const source = await realpath(sourceDir);
+    output = path.resolve(destination);
+    // Resolve existing parents before containment checks (e.g. the system /tmp alias).
+    let ancestor = path.dirname(output);
+    while (!await statIfPresent(ancestor)) ancestor = path.dirname(ancestor);
+    const ancestorStat = await lstat(ancestor);
+    if (ancestorStat.isSymbolicLink()) reject('symlink output parent');
+    const physicalOutput = path.resolve(await realpath(ancestor), path.relative(ancestor, output));
+    if (inside(physicalOutput, source)) reject('output contains the source directory');
+    if (inside(source, physicalOutput) && !inside(path.join(source, '.cache'), physicalOutput)) {
+      reject('output path must be outside source or in its cache');
+    }
+    if (physicalOutput === path.join(source, '.cache')) reject('output must be a new cache subdirectory');
+    if (await statIfPresent(output)) reject('output already exists');
+    output = physicalOutput;
+    const files = await collectFiles(source);
+    const manifestFiles = files.map(({ path: relative, bytes, sha256 }) => ({ path: relative, bytes, sha256 }));
+    const manifest = {
+      schemaVersion: 1,
+      policyVersion: 1,
+      sourceTreeSha256: createHash('sha256').update(JSON.stringify(manifestFiles)).digest('hex'),
+      files: manifestFiles,
+    };
+    await mkdir(path.dirname(output), { recursive: true });
+    // mkdir without recursive exclusively claims a new output; existing directories are never replaced.
+    await mkdir(output, { mode: 0o755 });
+    const ownedDirectory = await lstat(output);
+    async function assertOwnedOutput() {
+      const current = await lstat(output);
+      if (!current.isDirectory() || current.isSymbolicLink() || current.dev !== ownedDirectory.dev
+        || current.ino !== ownedDirectory.ino || await realpath(output) !== output) {
+        reject('output path changed');
+      }
+    }
+    await assertOwnedOutput();
+    for (const file of files) {
+      await assertOwnedOutput();
+      const target = path.join(output, ...file.path.split('/'));
+      await mkdir(path.dirname(target), { recursive: true, mode: 0o755 });
+      if (!inside(output, await realpath(path.dirname(target)))) reject('output path escaped');
+      await writeFile(target, file.buffer, { flag: 'wx', mode: 0o644 });
+    }
+    await assertOwnedOutput();
+    await writeFile(path.join(output, manifestName), JSON.stringify(manifest, null, 2) + '\n', { flag: 'wx', mode: 0o644 });
+    return manifest;
+  } catch (error) {
+    // Pathname-based recursive cleanup could remove an unrelated directory after concurrent substitution.
+    // Leave failed output for inspection; only exit 0 plus a verified manifest is a usable snapshot.
+    if (error instanceof ExportError) throw error;
+    reject('filesystem operation failed');
+  }
+}
+
+function parseArgs(args) {
+  const options = {};
+  for (let index = 0; index < args.length; index++) {
+    const key = args[index];
+    if (!['--source', '--output'].includes(key) || Object.hasOwn(options, key)) reject('invalid or duplicate argument');
+    const value = args[++index];
+    if (!value || value.startsWith('--')) reject('argument needs a value');
+    options[key] = value;
+  }
+  return { sourceDir: options['--source'], destination: options['--output'] };
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+  try {
+    const manifest = await exportPublicSource(parseArgs(process.argv.slice(2)));
+    console.log(`Public source snapshot ready: ${manifest.files.length} files; SHA-256 ${manifest.sourceTreeSha256}`);
+  } catch (error) {
+    console.error(error instanceof ExportError ? error.message : 'Public export rejected: unexpected failure');
+    process.exitCode = 1;
+  }
+}
