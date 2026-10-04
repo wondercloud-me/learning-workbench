@@ -55,7 +55,7 @@ export function applyProjectLinks(document, config) {
     const description = document.querySelector('[data-browser-description]');
     const entry = document.querySelector('[data-browser-entry]');
     if (status) status.textContent = '浏览器体验版';
-    if (description) description.textContent = '先读例子，再写代码、看真实运行结果并保存自己的解释。首次联网下载后可离线学习。手机安装、键盘和后台行为仍待真机验收；模型教学与语音继续开发中。';
+    if (description) description.textContent = '先读例子，再写代码、看真实运行结果并保存自己的解释。首次联网下载后可离线实践。也可自配模型、保存材料、独立侧聊和手动朗读；手机安装、键盘、声音与后台行为仍待真机验收。';
     if (entry) entry.hidden = false;
   }
 }

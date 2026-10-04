@@ -7,7 +7,7 @@ export function endpoint(settings: ProviderSettings): { url: string; protocol: '
   return { url: `${base}/${protocol === 'responses' ? 'responses' : 'chat/completions'}`, protocol };
 }
 
-export async function callModelDetailed(settings: ProviderSettings, key: string, system: string, turns: ChatTurn[], signal?: AbortSignal): Promise<ModelReply> {
+export async function callModelDetailed(settings: ProviderSettings, key: string, system: string, turns: ChatTurn[], signal?: AbortSignal, transport: typeof fetch = fetch): Promise<ModelReply> {
   if (!key) throw new Error('先在设置中保存 API Key');
   if (!settings.model.trim()) throw new Error('请填写模型名称');
   const { url, protocol } = endpoint(settings);
@@ -16,7 +16,7 @@ export async function callModelDetailed(settings: ProviderSettings, key: string,
     : { model: settings.model, messages: [{ role: 'system', content: system }, ...turns] };
   let response: Response;
   try {
-    response = await fetch(url, { method: 'POST', headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' }, body: JSON.stringify(body), signal });
+    response = await transport(url, { method: 'POST', headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' }, body: JSON.stringify(body), signal });
   } catch (error) {
     throw new Error(`模型连接失败：${error instanceof Error ? error.message : String(error)}`);
   }
@@ -48,8 +48,8 @@ export function normalizeUsage(value: any, protocol: 'responses' | 'chat'): Mode
   const uncachedInputTokens = reportedMiss ?? (inputTokens !== null && cachedInputTokens !== null ? inputTokens - cachedInputTokens : null);
   return { inputTokens, cachedInputTokens, uncachedInputTokens, cacheWriteTokens: tokenCount(details?.cache_write_tokens ?? value.cache_creation_input_tokens), outputTokens: tokenCount(protocol === 'responses' ? value.output_tokens : value.completion_tokens) };
 }
-export async function callModel(settings: ProviderSettings, key: string, system: string, turns: ChatTurn[], signal?: AbortSignal): Promise<string> {
-  return (await callModelDetailed(settings, key, system, turns, signal)).text;
+export async function callModel(settings: ProviderSettings, key: string, system: string, turns: ChatTurn[], signal?: AbortSignal, transport: typeof fetch = fetch): Promise<string> {
+  return (await callModelDetailed(settings, key, system, turns, signal, transport)).text;
 }
 
 export class ModelResponseError extends Error {

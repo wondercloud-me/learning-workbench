@@ -100,9 +100,11 @@ describe('voice resources by runtime target', () => {
     expect(await service.status()).toMatchObject({ ready: false, reason: expect.stringContaining('不支持') });
   });
 
-  it('reports unavailable Windows speech synthesis clearly', async () => {
-    const service = new LocalVoiceService('/missing', { platform: 'win32', arch: 'x64' });
-    expect(await service.listVoices()).toEqual([]);
-    await expect(service.speak('hello', '', 1)).rejects.toThrow('朗读');
+  it('routes Windows speech synthesis to the helper and reports startup failure clearly', async () => {
+    let launches = 0;
+    const service = new LocalVoiceService('/missing', { platform: 'win32', arch: 'x64' }, () => { launches++; throw new Error('OS launch failure'); });
+    await expect(service.listVoices()).rejects.toThrow('系统朗读无法启动');
+    await expect(service.speak('hello', '', 1)).rejects.toThrow('系统朗读无法启动');
+    expect(launches).toBe(2);
   });
 });

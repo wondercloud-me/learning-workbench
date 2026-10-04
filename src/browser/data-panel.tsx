@@ -8,7 +8,7 @@ export const MAX_BACKUP_BYTES = 50 * 1024 * 1024;
 const message = (cause: unknown) => cause instanceof Error ? cause.message : String(cause);
 const counts = (document: BrowserDocument) => `${document.state.columns.length} 栏目 · ${document.state.sideChats.length} 侧聊 · ${document.state.lab.attempts.length} 次实践 · ${document.state.checkins.length} 次打卡`;
 
-export function BrowserDataPanel({controller, onRestored, onRetrySaved, onDirty, hasUnsavedReference}: {controller: BrowserController; onRestored: () => void; onRetrySaved: () => void; onDirty: (dirty: boolean) => void; hasUnsavedReference: () => boolean}) {
+export function BrowserDataPanel({controller, onRestored, onRetrySaved, onDirty, hasUnsavedReference, onBeforeReplace}: {controller: BrowserController; onRestored: () => void; onRetrySaved: () => void; onDirty: (dirty: boolean) => void; hasUnsavedReference: () => boolean; onBeforeReplace?: () => void | (() => void)}) {
   const [incoming, setIncoming] = useState<BrowserDocument | null>(null);
   const [recoveries, setRecoveries] = useState<BrowserSnapshot[]>([]);
   const [busy, setBusy] = useState(false);
@@ -26,7 +26,7 @@ export function BrowserDataPanel({controller, onRestored, onRetrySaved, onDirty,
 
   function backupFile(compatible = false) {
     const document = controller.pendingDocument();
-    const data = compatible ? cleanBackup(document.state) : createBackup(document, '0.9.0', new Date().toISOString());
+    const data = compatible ? cleanBackup(document.state) : createBackup(document, '0.10.0', new Date().toISOString());
     return new File([JSON.stringify(data, null, 2)], `学习工作台${compatible ? '-旧桌面' : ''}-${new Date().toLocaleDateString('sv-SE')}.json`, {type: 'application/json'});
   }
   function download(compatible = false) {
@@ -56,21 +56,26 @@ export function BrowserDataPanel({controller, onRestored, onRetrySaved, onDirty,
   }
   async function replace(next: BrowserDocument) {
     if (hasUnsavedReference()) {setError('资料页还有未保存的片段，请先保存或放弃片段，再恢复备份。'); return;}
-    if (busy) return; setBusy(true); setError('');
-    try {await controller.replace(next); setIncoming(null); onDirty(false); onRestored(); setNotice('备份已恢复。替换前的记录保留在恢复快照中。'); controller.recoveries().then(setRecoveries).catch(cause => setError(message(cause)));}
+    if (busy || controller.isBusy()) return;
+    if (controller.hasPending()) {setError('请先保存或放弃当前待存内容，再恢复备份。'); return;}
+    setBusy(true); setError('');
+    let release: void | (() => void) = undefined;
+    try {release = onBeforeReplace?.(); await controller.replace(next); setIncoming(null); onDirty(false); onRestored(); setNotice('备份已恢复。替换前的记录保留在恢复快照中。'); controller.recoveries().then(setRecoveries).catch(cause => setError(message(cause)));}
     catch (cause) {setError(message(cause));}
-    finally {setBusy(false);}
+    finally {release?.(); setBusy(false);}
   }
   async function retry() {
     try {await controller.change(value => value); await controller.flush(); onRetrySaved(); setNotice('待存内容已保存。'); setError('');}
     catch (cause) {setError(message(cause));}
   }
   async function reloadLatest() {
-    if (busy) return;
+    if (busy || controller.isBusy()) return;
+    if (hasUnsavedReference()) {setError('请先保存或放弃未保存的输入，再读取最新记录。'); return;}
     setBusy(true);
-    try {await controller.reloadLatest(); onRestored(); setNotice('已读取其他页面保存的最新记录。'); setError('');}
+    let release: void | (() => void) = undefined;
+    try {release = onBeforeReplace?.(); await controller.reloadLatest(); onRestored(); setNotice('已读取其他页面保存的最新记录。'); setError('');}
     catch (cause) {setError(message(cause));}
-    finally {setBusy(false);}
+    finally {release?.(); setBusy(false);}
   }
   async function requestPersistence() {
     try {if (!navigator.storage?.persist) throw Error('当前浏览器没有持久存储请求接口。'); setPersistent(await navigator.storage.persist());}

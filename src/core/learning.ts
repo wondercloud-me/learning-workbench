@@ -106,7 +106,7 @@ export function beginVerification(column: LearningColumn): LearningColumn {
 export function recordAnswer(column: LearningColumn, answer: string, helpLevel: HelpLevel, now: string): LearningColumn {
   if (column.phase !== 'verify') throw new Error('当前不是学后验证阶段');
   if (!answer.trim()) throw new Error('回答不能为空');
-  return { ...column, phase: 'teachback', pendingAnswer: { text: answer.trim(), helpLevel, createdAt: now } };
+  return { ...column, phase: 'teachback', pendingAnswer: { text: answer, helpLevel, createdAt: now } };
 }
 
 export function recordTeachback(column: LearningColumn, teachback: string, now: string): LearningColumn {
@@ -116,7 +116,7 @@ export function recordTeachback(column: LearningColumn, teachback: string, now: 
   if (!stepId) throw new Error('没有当前知识块');
   const evidence: Evidence = {
     id: crypto.randomUUID(), stepId, answer: column.pendingAnswer.text,
-    teachback: teachback.trim(), helpLevel: column.pendingAnswer.helpLevel,
+    teachback: teachback, helpLevel: column.pendingAnswer.helpLevel,
     level: column.pendingAnswer.helpLevel === 'explained' ? '待验证' : '初步理解',
     confirmed: false, createdAt: now
   };

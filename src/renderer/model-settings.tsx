@@ -1,10 +1,14 @@
 import React, { useRef, useState } from 'react';
 import { validateProfile, type ApiProfile, type ModelLibrary, type ModelSelection } from '../core/model-library';
 import { endpoint } from '../core/providers';
-import { Icon } from './shell';
+import { Icon } from './icon';
 import './model-settings.css';
 
 interface ModelSettingsProps {
+  httpsOnly?: boolean;
+  sessionNote?: string;
+  emptyNote?: string;
+  onDirty?: (dirty: boolean) => void;
   library: ModelLibrary;
   keyStatus: Record<string, boolean>;
   busy: boolean;
@@ -25,7 +29,7 @@ const templates: Array<{ id: TemplateId; title: string; detail: string; form: Pa
 const protocolLabel = (protocol: ApiProfile['protocol']) => protocol === 'responses' ? 'Responses' : 'Chat Completions';
 
 /** Configuration metadata is persistent; API keys never enter this component's saved profiles. */
-export function ModelSettings({ library, keyStatus, busy, onSave, onSelect, onRemove, onTest }: ModelSettingsProps) {
+export function ModelSettings({ library, keyStatus, busy, onSave, onSelect, onRemove, onTest, httpsOnly = false, sessionNote, emptyNote, onDirty }: ModelSettingsProps) {
   const [form, setForm] = useState<ProfileForm>(blankForm);
   const [template, setTemplate] = useState<TemplateId | null>(null);
   const [editing, setEditing] = useState(false);
@@ -38,7 +42,7 @@ export function ModelSettings({ library, keyStatus, busy, onSave, onSelect, onRe
   const nameRef = useRef<HTMLInputElement>(null);
   const requestLock = useRef(false);
   const locked = busy || working;
-  const field = <K extends keyof ProfileForm>(key: K, value: ProfileForm[K]) => setForm(current => ({ ...current, [key]: value }));
+  const field = <K extends keyof ProfileForm>(key: K, value: ProfileForm[K]) => {if (locked) return; setForm(current => ({ ...current, [key]: value })); onDirty?.(true);};
   const savedProfile = library.profiles.find(profile => profile.id === form.id);
   let connectionChanged = false;
   let requestUrl = '';
@@ -63,6 +67,7 @@ export function ModelSettings({ library, keyStatus, busy, onSave, onSelect, onRe
   }
 
   function chooseTemplate(id: TemplateId) {
+    if (locked) return; onDirty?.(true);
     const selected = templates.find(item => item.id === id)!;
     setTemplate(id); setEditing(false); setForm({ ...blankForm(), ...selected.form });
     setError(''); setStatus(''); setRemoveId(null);
@@ -70,31 +75,35 @@ export function ModelSettings({ library, keyStatus, busy, onSave, onSelect, onRe
   }
 
   function edit(profile: ApiProfile) {
+    if (locked) return; onDirty?.(false);
     setForm({ ...profile, models: profile.models.join('\n'), key: '' });
     setTemplate(null); setEditing(true); setError(''); setStatus(''); setRemoveId(null);
-    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    formRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
     requestAnimationFrame(() => nameRef.current?.focus({ preventScroll: true }));
   }
 
   function cancelEdit() {
+    onDirty?.(false);
     setForm(blankForm()); setTemplate(null); setEditing(false); setError(''); setStatus('');
   }
 
   function save(event: React.FormEvent) {
     event.preventDefault();
+    if (locked || requestLock.current) return;
     const name = form.name.trim(), baseUrl = form.baseUrl.trim();
     const models = [...new Set(form.models.split(/[\n,，]+/).map(value => value.trim()).filter(Boolean))];
     if (!name) { setError('请填写接口名称，方便之后切换。'); return; }
     try {
       const url = new URL(baseUrl);
-      if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password || url.search || url.hash) throw new Error();
-    } catch { setError('请填写完整的 HTTP 或 HTTPS 基地址，不要附带 API Key、查询参数或请求路径。'); return; }
+      if (!(httpsOnly ? ['https:'] : ['http:', 'https:']).includes(url.protocol) || url.username || url.password || url.search || url.hash) throw new Error();
+    } catch { setError(httpsOnly ? '浏览器必须使用完整 HTTPS 基地址，不要附带凭证、查询参数或片段。' : '请填写完整的 HTTP 或 HTTPS 基地址，不要附带 API Key、查询参数或请求路径。'); return; }
     if (!models.length) { setError('至少填写一个模型 ID；可以从接口提供方的文档中复制。'); return; }
     if (models.some(model => /\s/.test(model))) { setError('模型 ID 中不能包含空格；多个模型请分行填写。'); return; }
     const profile = validateProfile({ id: form.id || crypto.randomUUID(), name, baseUrl, protocol: form.protocol, models, contextWindows:form.contextWindows });
     const key = form.key.trim();
     void run(async () => {
       await onSave(profile, key);
+      onDirty?.(false);
       setForm({ ...profile, models: models.join('\n'), key: '' }); setTemplate(null); setEditing(true);
       setStatus(`已保存「${profile.name}」。${key || canKeepKey ? '可以在上方选择模型或测试连接。' : connectionChanged ? '地址或协议已更改，请重新填写 API Key 后再调用。' : '配置已保留，填写 API Key 后即可调用。'}`);
     });
@@ -103,12 +112,12 @@ export function ModelSettings({ library, keyStatus, busy, onSave, onSelect, onRe
   return <div className="model-settings">
     <h2>模型与接口</h2>
     <p className="model-settings-intro">保存多个 API，在聊天中随时切换接口和模型。</p>
-    <div className="model-storage-note"><Icon name="key"/><span>配置保存在本机。API Key 仅在本次运行中使用，退出应用后需要重新填写，也不会进入备份。</span></div>
+    <div className="model-storage-note"><Icon name="key"/><span>{sessionNote ?? '配置保存在本机。API Key 仅在本次运行中使用，退出应用后需要重新填写，也不会进入备份。'}</span></div>
     <div className="model-feedback" aria-live="polite">{error ? <p className="model-error" role="alert"><Icon name="error"/>{error}</p> : status ? <p className="model-status"><Icon name="check"/>{status}</p> : null}</div>
 
     <section className="configured-apis" aria-labelledby="configured-api-title">
       <div className="model-section-heading"><h3 id="configured-api-title">已配置的 API</h3><span>{library.profiles.length} 个接口</span></div>
-      {!library.profiles.length && <div className="model-empty"><Icon name="plug"/><div><strong>还没有配置接口</strong><p>从下方选择模板，填写自己的 API Key 和模型，即可开始正式学习。</p></div></div>}
+      {!library.profiles.length && <div className="model-empty"><Icon name="plug"/><div><strong>还没有配置接口</strong><p>{emptyNote ?? '从下方选择模板，填写自己的 API Key 和模型，即可开始正式学习。'}</p></div></div>}
       <div className="api-profile-list">{library.profiles.map(profile => {
         const active = library.active?.profileId === profile.id;
         const ready = !!keyStatus[profile.id];

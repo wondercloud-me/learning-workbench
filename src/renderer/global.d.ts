@@ -4,6 +4,7 @@ import type { ContextTurn } from '../core/context-cache';
 import type { AppState } from '../core/state';
 import type { ChatTurn } from '../core/providers';
 import type { ApiProfile } from '../core/model-library';
+import type {DailyReminderStatus, LoginStatus, NotificationTestStatus} from '../core/system-controls';
 declare global {
   interface Window {
     workbench: {
@@ -43,8 +44,10 @@ declare global {
       diff(): Promise<Array<{ path: string; before: string; after: string; status: 'added' | 'modified' | 'deleted'; conflict: boolean }>>;
       apply(paths: string[]): Promise<string[]>; run(command: string): Promise<{ code: number; output: string }>;
       agent(goal: string, profile: ApiProfile, model: string): Promise<string[]>; preview(command: string, port: number): Promise<string>; openPreview(url: string): Promise<void>;
-      loginStatus(): Promise<boolean>; setLogin(enabled: boolean): Promise<boolean>;
-      reminderStatus(): Promise<{ date: string; status: 'attempted' | 'shown' | 'unsupported'; at: string } | null>;
+      loginStatus(): Promise<LoginStatus>; setLogin(enabled: boolean): Promise<LoginStatus>;
+      reminderStatus(): Promise<DailyReminderStatus>;
+      testNotification(): Promise<NotificationTestStatus>;
+      notificationTestStatus(): Promise<NotificationTestStatus | null>;
     }
   }
 }

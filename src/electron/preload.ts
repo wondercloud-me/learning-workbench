@@ -47,6 +47,8 @@ const calls = {
   openPreview: (url: string) => ipcRenderer.invoke('preview:open', url),
   loginStatus: () => ipcRenderer.invoke('app:login-status'),
   setLogin: (enabled: boolean) => ipcRenderer.invoke('app:set-login', enabled),
-  reminderStatus: () => ipcRenderer.invoke('app:reminder-status')
+  reminderStatus: () => ipcRenderer.invoke('app:reminder-status'),
+  testNotification: () => ipcRenderer.invoke('app:test-notification'),
+  notificationTestStatus: () => ipcRenderer.invoke('app:notification-test-status')
 };
 contextBridge.exposeInMainWorld('workbench', calls);

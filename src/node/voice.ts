@@ -4,6 +4,7 @@ import { access, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { parseTranscript, speechChunks, validateWav } from '../core/speech';
+import { startWindowsTts, waitForWindowsTtsClose, windowsSpeechRate, windowsTtsError, type WindowsTtsJob, type WindowsTtsLauncher } from './windows-tts';
 // @ts-expect-error Shared plain JavaScript helper is bundled into the Electron main process.
 import { selectSpeechTarget } from '../../scripts/speech-platforms.mjs';
 
@@ -15,7 +16,9 @@ export class LocalVoiceService {
   private reader: ChildProcess | null = null;
   private generation = 0;
   private voices: SystemVoice[] | null = null;
-  constructor(private readonly root: string, private readonly target: { platform: string; arch: string } = { platform: process.platform, arch: process.arch }) {}
+  private windowsReader: WindowsTtsJob | null = null;
+  private windowsQuery: WindowsTtsJob | null = null;
+  constructor(private readonly root: string, private readonly target: { platform: string; arch: string } = { platform: process.platform, arch: process.arch }, private readonly windowsLauncher?: WindowsTtsLauncher) {}
 
   private async resources(): Promise<{ directory: string; executable: string } | null> {
     let spec;
@@ -82,10 +85,18 @@ export class LocalVoiceService {
   }
 
   cancel(id: string) { this.jobs.get(id)?.abort(); }
-  stopSpeaking() { this.generation++; this.reader?.kill(); this.reader = null; }
+  stopSpeaking() { this.generation++; this.windowsReader?.cancel(); this.reader?.kill(); this.reader = null; }
   cancelAll() { this.jobs.forEach(controller => controller.abort()); this.stopSpeaking(); }
 
   async listVoices(): Promise<SystemVoice[]> {
+    if (this.target.platform === 'win32') {
+      const job = this.windowsQuery || startWindowsTts({ operation: 'voices' }, this.windowsLauncher);
+      this.windowsQuery = job;
+      void job.closed.then(() => { if (this.windowsQuery === job) this.windowsQuery = null; });
+      const reply = await job.completion;
+      const error = windowsTtsError(reply); if (error) throw error;
+      return 'voices' in reply ? reply.voices : [];
+    }
     if (this.voices) return this.voices;
     if (this.target.platform !== 'darwin') return [];
     const { stdout } = await execute('/usr/bin/say', ['-v', '?'], { timeout: 10000 });
@@ -97,12 +108,23 @@ export class LocalVoiceService {
   }
 
   async speak(text: string, requestedVoice: string, rate: number): Promise<void> {
-    if (this.target.platform !== 'darwin') throw new Error('当前系统暂未提供本机朗读；Windows 可继续使用文字与语音识别');
+    if (this.target.platform !== 'darwin' && this.target.platform !== 'win32') throw new Error('当前系统不支持本机朗读');
     if (typeof text !== 'string' || text.length > 100000) throw new Error('朗读文本过长');
     const clean = speechChunks(text).join('');
     if (!clean.trim()) throw new Error('这条消息没有可朗读的文字');
     this.stopSpeaking();
     const generation = this.generation;
+    if (this.target.platform === 'win32') {
+      const previous = this.windowsReader;
+      if (previous) await waitForWindowsTtsClose(previous);
+      if (generation !== this.generation) return;
+      const job = startWindowsTts({ operation: 'speak', text: clean, voice: typeof requestedVoice === 'string' ? requestedVoice : '', rate: windowsSpeechRate(rate) }, this.windowsLauncher);
+      this.windowsReader = job;
+      void job.closed.then(() => { if (this.windowsReader === job) this.windowsReader = null; });
+      const reply = await job.completion;
+      const error = windowsTtsError(reply); if (error) throw error;
+      return;
+    }
     const voices = await this.listVoices();
     if (generation !== this.generation) return;
     const voice = voices.find(item => item.name === requestedVoice) || voices.find(item => item.name === 'Tingting') || voices.find(item => item.language === 'zh_CN');

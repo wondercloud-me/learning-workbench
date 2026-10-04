@@ -66,3 +66,10 @@ describe('learning progression', () => {
     expect(completeStep(addressGap(confirmed, id, true)).phase).toBe('overview');
   });
 });
+
+ it('preserves exact learner whitespace and code indentation in answer and teachback', () => {
+ const column = beginVerification({...beginStudy(confirmPlan(createColumn('代码','解释函数','2026-10-05'),{target:'理解',steps:[{id:'s',title:'函数',outcome:'运行函数',priority:1}]})),taughtStepIds:['s']});
+ const answer = '  中文\n    return name;\n '; const teachback = '\n  我理解了参数  \n';
+ const result = recordTeachback(recordAnswer(column,answer,'explained','2026-10-05'),teachback,'2026-10-05');
+ expect(result.evidence[0].answer).toBe(answer); expect(result.evidence[0].teachback).toBe(teachback);
+ });

@@ -134,8 +134,8 @@ export function VoiceSettingsPanel({ value, onChange, onError }: { value: VoiceS
   }, []);
   return <div className="panel-card voice-settings"><h2>语音输入与朗读</h2><p>{status}</p><p>录音在本机识别，普通话、粤语和英语会自动判断。每次最多 60 秒，文字先放入草稿。录音不进入聊天记录或备份。</p>
     <label><input type="checkbox" checked={value.autoRead} onChange={event => onChange({ ...value, autoRead: event.target.checked })}/>自动朗读新回复</label>
-    <label>朗读声音<select value={value.voice} onChange={event => onChange({ ...value, voice: event.target.value })}><option value="">系统中文声音</option>{voices.sort((a, b) => Number(b.language.startsWith('zh')) - Number(a.language.startsWith('zh'))).map(voice => <option key={voice.name} value={voice.name}>{voice.name} · {voice.language}</option>)}</select></label>
-    <label>朗读语速<select value={value.rate} onChange={event => onChange({ ...value, rate: Number(event.target.value) })}>{[0.75, 1, 1.25, 1.5].map(rate => <option key={rate} value={rate}>{rate} 倍</option>)}</select></label>
+    <label>朗读声音<select value={value.voice} onChange={event => onChange({ ...value, voice: event.target.value })}><option value="">系统声音（优先中文）</option>{voices.sort((a, b) => Number(b.language.startsWith('zh')) - Number(a.language.startsWith('zh'))).map(voice => <option key={voice.name} value={voice.name}>{voice.name} · {voice.language}</option>)}</select></label>
+    <label>相对语速<select value={value.rate} onChange={event => onChange({ ...value, rate: Number(event.target.value) })}>{[0.75, 1, 1.25, 1.5].map((rate, index) => <option key={rate} value={rate}>{['较慢', '标准', '较快', '更快'][index]}</option>)}</select></label>
     <div className="button-row"><button onClick={() => void window.workbench.speak('你好，我们一步一步来。先理解，再用自己的话讲出来。', value.voice, value.rate).catch(error => onError(String(error)))}>试听声音</button><button onClick={() => void window.workbench.stopSpeaking()}>停止试听</button></div>
     <small>朗读使用系统声音，代码块会略过。语音模型：SenseVoice Small（FunAudioLLM / FunASR）；运行引擎：sherpa-onnx。</small>
   </div>;

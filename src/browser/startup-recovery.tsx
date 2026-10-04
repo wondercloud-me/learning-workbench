@@ -66,7 +66,7 @@ export function StartupRecovery({cause, onRetry, openRecovery = openBrowserRecov
   }
   function snapshotBackup(snapshot: BrowserSnapshot) {
     try {
-      download(JSON.stringify(createBackup(snapshot.document, '0.9.0', new Date().toISOString()), null, 2), `学习工作台-恢复快照-${snapshot.revision}.json`);
+      download(JSON.stringify(createBackup(snapshot.document, '0.10.0', new Date().toISOString()), null, 2), `学习工作台-恢复快照-${snapshot.revision}.json`);
       setNotice('快照备份已交给浏览器下载。请检查文件保存位置。'); setError('');
     } catch (cause) {setError(message(cause));}
   }

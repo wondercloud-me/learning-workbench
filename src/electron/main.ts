@@ -21,9 +21,12 @@ import { cleanBackup, emptyState, validateState, type AppState } from '../core/s
 import { readBackup } from '../core/backup';
 import { personalInstruction } from '../core/preferences';
 import { LocalVoiceService } from '../node/voice';
-import { reminderDue } from '../core/reminders';
+import {desktopAppId, desktopToastClsid} from '../core/system-controls';
+import {LoginControls, NotificationControls} from '../node/system-controls';
 import { applyDiff, closeProject, copyProject, dockerRun, listFiles, preflight, projectDiff, projectTopEntries, safeProjectPath, type ProjectSession } from '../node/projects';
 
+// Set stable Windows identity before any native notification API or window creation.
+if (process.platform === 'win32') {app.setAppUserModelId(desktopAppId); app.setToastActivatorCLSID(desktopToastClsid);}
 protocol.registerSchemesAsPrivileged([{ scheme: 'growth', privileges: { standard: true, secure: true, supportFetchAPI: true, stream: true } }]);
 const desktopSecurity = createDesktopSecurity({isPackaged: app.isPackaged, devServerUrl: process.env.VITE_DEV_SERVER_URL});
 
@@ -42,14 +45,24 @@ let chosenRoot: string | null = null;
 const models = new ModelRuntime();
 const modelOperations = new ModelOperations();
 const tutorials = new TutorialStore(path.join(app.getPath('userData'),'tutorial-cache'));
-let lastNotified: string | null = null;
 let previewContainer: string | null = null;
-let reminderStatus: { date: string; status: 'attempted' | 'shown' | 'unsupported'; at: string } | null = null;
-let loginPreference: boolean | null = null;
 
 const stateFile = () => path.join(app.getPath('userData'), 'state.json');
 const reminderFile = () => path.join(app.getPath('userData'), 'reminder.json');
 const loginFile = () => path.join(app.getPath('userData'), 'login.json');
+const loginControls = new LoginControls({platform: process.platform, isPackaged: app.isPackaged, execPath: process.execPath,
+  storage: {read: () => readFile(loginFile(), 'utf8'), write: text => atomicWrite(loginFile(), text)},
+  api: {get: options => app.getLoginItemSettings(options), set: options => app.setLoginItemSettings(options)},
+});
+const notifications = new NotificationControls({
+  storage: {read: () => readFile(reminderFile(), 'utf8'), write: text => atomicWrite(reminderFile(), text)},
+  native: {supported: () => Notification.isSupported(), create: options => new Notification(options)},
+  dailySettings: now => {
+    const date = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');
+    return {time: state.settings.reminderTime, enabled: state.settings.reminderEnabled, checkedIn: state.checkins.some(item => item.date === date), startDate: state.settings.reminderDate};
+  },
+  focus: () => {window?.show(); window?.focus();},
+});
 async function atomicWrite(file: string, data: string | Buffer) {
   await mkdir(path.dirname(file), { recursive: true });
   const temp = `${file}.tmp`;
@@ -60,8 +73,8 @@ async function loadState() {
   const loaded = await loadStateFile(stateFile());
   state = loaded.state;
   if (loaded.recoveryFile) await dialog.showMessageBox({type:'warning',title:'学习记录需要恢复',message:'原学习记录暂时无法读取，已保留完整副本。',detail:`软件将从空白状态启动。请保留此文件，以便恢复原记录：\n${loaded.recoveryFile}`,buttons:['知道了']});
-  try { reminderStatus = JSON.parse(await readFile(reminderFile(), 'utf8')); lastNotified = reminderStatus?.date || null; } catch { reminderStatus = null; }
-  try { loginPreference = JSON.parse(await readFile(loginFile(), 'utf8')).enabled === true; } catch { loginPreference = null; }
+  // Finish authorized first-launch initialization before the renderer can query it.
+  await Promise.all([notifications.initialize(), loginControls.initialize()]);
 }
 async function commitState(change: (current:AppState)=>AppState) {
   let next!:AppState;
@@ -234,9 +247,11 @@ function registerIpc() {
   });
   handle('preview:open', (_event, url: string) => { if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(url)) throw new Error('只允许本机预览'); previewWindow?.close(); previewWindow = new BrowserWindow({ width: 1100, height: 750, webPreferences: { sandbox: true, nodeIntegration: false, contextIsolation: true } }); previewWindow.loadURL(url); });
   handle('app:quit', () => { forceQuit = true; app.quit(); });
-  handle('app:login-status', () => app.getLoginItemSettings().openAtLogin);
-  handle('app:set-login', async (_event, enabled: boolean) => { loginPreference = !!enabled; await atomicWrite(loginFile(), JSON.stringify({ enabled: loginPreference })); app.setLoginItemSettings({ openAtLogin: loginPreference }); return app.getLoginItemSettings().openAtLogin; });
-  handle('app:reminder-status', () => reminderStatus);
+  handle('app:login-status', () => loginControls.status());
+  handle('app:set-login', (_event, enabled: unknown) => loginControls.set(enabled));
+  handle('app:reminder-status', () => notifications.status());
+  handle('app:test-notification', () => notifications.test());
+  handle('app:notification-test-status', () => notifications.testStatus());
 }
 
 app.whenReady().then(async () => {
@@ -253,26 +268,9 @@ app.whenReady().then(async () => {
   await loadState(); console.log('startup state loaded'); registerIpc(); mainWindow(); console.log('startup window created');
   try { createTray(); } catch (error) { console.error('菜单栏初始化失败', error); }
   console.log('startup tray completed');
-  try {
-    if (app.isPackaged && process.platform === 'darwin') {
-      if (loginPreference === null) { loginPreference = true; await atomicWrite(loginFile(), JSON.stringify({ enabled: true })); }
-      app.setLoginItemSettings({ openAtLogin: loginPreference });
-    }
-  } catch (error) { console.error('开机启动设置失败', error); }
   console.log('startup login completed');
   setInterval(() => {
-    const now = new Date();
-    const date = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');
-    if (reminderDue(now, state.settings.reminderTime, state.settings.reminderEnabled, lastNotified, state.checkins.some(item => item.date === date), state.settings.reminderDate)) {
-      reminderStatus = { date, status: Notification.isSupported() ? 'attempted' : 'unsupported', at: now.toISOString() };
-      void atomicWrite(reminderFile(), JSON.stringify(reminderStatus));
-      if (Notification.isSupported()) {
-        const notification = new Notification({ title: '学习工作台', body: '今天留一点时间推进最重要的一步。' });
-        notification.on('show', () => { reminderStatus = { date, status: 'shown', at: new Date().toISOString() }; void atomicWrite(reminderFile(), JSON.stringify(reminderStatus)); });
-        notification.show();
-      }
-      lastNotified = date;
-    }
+    void notifications.checkDaily().catch(() => console.error('每日提醒检查失败'));
   }, 30000).unref();
 }).catch(async error => { console.error('学习工作台启动失败', error); await dialog.showMessageBox({type:'error',title:'无法启动学习工作台',message:'读取本机资料失败，原文件未被覆盖。',detail:error instanceof Error?error.message:String(error)}); forceQuit=true;app.quit(); });
 app.on('window-all-closed', () => {});
