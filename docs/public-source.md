@@ -20,19 +20,22 @@ node scripts/export-public-source.mjs --output .cache/public-source-20261005-01
 | `tests/` | 代码及 JSON、HTML、TXT 测试夹具 |
 | `scripts/` | JS/TS、Python、Shell、PowerShell 维护脚本 |
 | `assets/` | 图标、PNG/JPEG/WebP/GIF/SVG 图片、macOS entitlements |
+| `browser/` | 手机/浏览器入口 HTML、Web App manifest、PNG/SVG 图标及 Markdown 来源说明 |
 | `licenses/` | 许可证、NOTICE、COPYING、AUTHORS 与文本/JSON/HTML 许可清单 |
 | `website/` | 静态官网的 HTML/CSS/JS、文本、配置、图片和校验脚本 |
 | `.github/` | YAML 工作流和 Markdown/JSON 协作配置 |
-| 根文件 | README、LICENSE、第三方说明、贡献/安全/变更说明、package、pnpm 锁文件/工作区配置、index、tsconfig、vite/vitest 配置和 `.gitignore` |
+| 根文件 | README、LICENSE、第三方说明、贡献/安全/变更说明、package、pnpm 锁文件/工作区配置、index、tsconfig、vite/vitest 配置（含 `vite.browser.config.ts`）和 `.gitignore` |
 | `docs/` | 仅本文 `docs/public-source.md` |
 
 根文件采用脚本中的完整文件名清单，不接受任意同类配置文件。README、LICENSE、package.json、pnpm-lock.yaml 是必需文件。README 的相对文件链接必须能在快照中找到；指向已排除文档的链接会阻止导出。
+
+浏览器构建所需的 `browser/index.html`、`browser/public/manifest.webmanifest`、`browser/public/icons/` 的 PNG/SVG 图标和来源说明进入快照；`src/browser/` 与 `scripts/build-browser-sw.mjs` 沿用已有源码和脚本规则。浏览器所选文件同样逐字节扫描凭据、个人 home 路径和异常二进制，符号链接同样拒绝。
 
 所选目录中新出现的扩展名、隐藏文件、空格或非 ASCII 文件名需要维护者先审阅并调整清单。图片检查常见文件头；非图片文本不能包含 NUL 字节。单文件上限 8 MiB，整份所选源码上限 64 MiB。二进制依赖和语音权重通过构建脚本下载，不进入源码快照。
 
 ## 排除与失败条件
 
-`.git/`、`.cache/`、`node_modules/`、`resources/`、构建/发布目录不进入快照。即使放在所选目录内部，用户数据、私人目录、备份、教材缓存、凭据和签名目录仍被排除；常见 `.env`、状态/模型备份 JSON、私钥、证书、数据库和备份文件也被排除。`docs/research/`、`docs/plans/`、`docs/superpowers/`、本机 QA 记录和课堂/个人工作区历史不在清单中。
+`.git/`、`.cache/`、`node_modules/`、`resources/`、构建/发布目录（含 `dist-browser/`）不进入快照。即使放在所选目录内部，用户数据（含浏览器目录内的 `userData/`）、`personal/`、`private/`、备份、教材缓存、凭据和签名目录仍被排除；常见 `.env`、状态/模型备份 JSON、私钥、证书、数据库和备份文件也被排除。`docs/research/`、`docs/plans/`、`docs/superpowers/`、本机 QA 记录和课堂/个人工作区历史不在清单中。
 
 所选文件或目录是符号链接时直接失败。脚本检查真实读取路径位于源码目录，并在读取时禁止跟随文件符号链接。校验与内容检查完成之后才创建目标目录；写入时使用已核对的真实路径，检查目录身份和实际父目录，文件采用排他创建。
 
@@ -51,4 +54,4 @@ pnpm exec vitest run tests/public-source.test.ts
 pnpm typecheck
 ```
 
-测试使用临时目录与虚构内容，实际执行导出 CLI。覆盖公开内容与历史/用户数据隔离、逐文件字节和散列一致性、符号链接、意外文件类型、凭据失败诊断、假路径示例、README 链接和目标目录保护。公开前还应针对最终快照运行项目测试、构建和网站检查，并核对 `PUBLIC_SOURCE_MANIFEST.json` 后再建立公开提交。
+测试使用临时目录与虚构内容，实际执行导出 CLI；浏览器导出测试还读取仓库的真实入口、配置、manifest、图标及来源说明，并核对副本字节和散列。覆盖公开内容与历史/用户数据隔离、逐文件字节和散列一致性、符号链接、意外文件类型、凭据失败诊断、假路径示例、README 链接和目标目录保护。公开前还应针对最终快照运行项目测试、构建和网站检查，并核对 `PUBLIC_SOURCE_MANIFEST.json` 后再建立公开提交。

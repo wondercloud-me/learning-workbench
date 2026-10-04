@@ -55,6 +55,108 @@ async function filesUnder(directory: string, prefix = ''): Promise<string[]> {
 }
 
 describe('fresh public source export', () => {
+  it('exports the real browser entry, config, manifest and icons without browser build or personal data', async () => {
+    const publicBrowserFiles = [
+      'vite.browser.config.ts', 'browser/index.html', 'browser/public/manifest.webmanifest',
+      'browser/public/icons/icon-192.png', 'browser/public/icons/icon-512.png',
+      'browser/public/icons/maskable-512.png', 'browser/public/icons/README.md',
+      'src/browser/main.tsx', 'scripts/build-browser-sw.mjs',
+    ];
+    const browserFiles: Record<string, Buffer> = {};
+    for (const relative of publicBrowserFiles) {
+      browserFiles[relative] = await readFile(new URL('../' + relative, import.meta.url));
+    }
+    const { source, output } = await fixture({
+      ...browserFiles,
+      'browser/public/icons/example.svg': '<svg xmlns="http://www.w3.org/2000/svg"></svg>\n',
+      'dist-browser/index.html': 'built browser output\n',
+      'browser/dist-browser/index.html': 'nested built browser output\n',
+      'browser/public/personal/answers.json': 'personal learning answers\n',
+      'browser/userData/notes.json': 'nested browser user data\n',
+      'browser/public/private/history.json': 'private browser history\n',
+      'browser/public/resources/speech/model.onnx': 'downloaded model\n',
+      'browser/public/models.json': 'model credentials\n',
+      'browser/public/models-backup.json': 'model credential backup\n',
+      'browser/public/.env.local': 'private environment\n',
+      'resources/speech/model.onnx': 'downloaded model\n',
+      'userData/history.json': 'personal history\n',
+      '.git/logs/HEAD': 'private commit history\n',
+    });
+    const result = run(source, output);
+    expect(result.status, result.stderr).toBe(0);
+    const exported = await filesUnder(output);
+    const selected = [...publicBrowserFiles, 'browser/public/icons/example.svg'];
+    expect(exported.filter(file => file.startsWith('browser/') || file === 'vite.browser.config.ts'))
+      .toEqual(selected.filter(file => file.startsWith('browser/') || file === 'vite.browser.config.ts').sort());
+    expect(exported).toContain('src/browser/main.tsx');
+    expect(exported).toContain('scripts/build-browser-sw.mjs');
+    expect(exported.some(file => /^(?:dist-browser|resources|userData|\.git)\//.test(file))).toBe(false);
+    const manifest = JSON.parse(await readFile(path.join(output, 'PUBLIC_SOURCE_MANIFEST.json'), 'utf8'));
+    for (const relative of selected) {
+      const bytes = await readFile(path.join(source, relative));
+      expect((await readFile(path.join(output, relative))).equals(bytes)).toBe(true);
+      expect(manifest.files.find((file: { path: string }) => file.path === relative)).toEqual({
+        path: relative, bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex'),
+      });
+    }
+  });
+
+  it.each(['browser/index.html', 'browser/public/manifest.webmanifest', 'browser/public/icons/example.svg', 'vite.browser.config.ts'])
+    ('scans credentials in newly selected browser source %s', async relative => {
+      const secret = 'sk-proj-' + 'A1b2C3d4E5f6G7h8'.repeat(3);
+      const { source, output, root } = await fixture({ [relative]: secret });
+      const result = run(source, output);
+      expect(result.status).not.toBe(0);
+      expect(result.stderr).toContain('credential pattern');
+      expect(result.stderr).toContain(relative);
+      expect(result.stderr).not.toContain(secret);
+      expect(result.stderr).not.toContain(source);
+      expect(await readdir(root)).not.toContain('snapshot');
+    });
+
+  it('scans browser icon bytes after a valid PNG header', async () => {
+    const secret = 'sk-proj-' + 'A1b2C3d4E5f6G7h8'.repeat(3);
+    const contents = Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), Buffer.from(secret)]);
+    const { source, output } = await fixture({ 'browser/public/icons/icon.png': contents });
+    const result = run(source, output);
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain('credential pattern');
+    expect(result.stderr).not.toContain(secret);
+  });
+
+  it.each([
+    ['browser/public/icons/icon.png', 'not a PNG'],
+    ['browser/public/manifest.webmanifest', 'binary\0manifest'],
+  ])('checks the binary type of newly selected browser source %s', async (relative, contents) => {
+    const { source, output } = await fixture({ [relative]: contents });
+    const result = run(source, output);
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain('unexpected binary file type');
+  });
+
+  it('rejects personal home paths in browser source', async () => {
+    const homePath = '/' + 'Users/' + 'PrivateOwner/Desktop/classroom.txt';
+    const { source, output } = await fixture({ 'browser/index.html': homePath });
+    const result = run(source, output);
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain('personal home path');
+    expect(result.stderr).not.toContain(homePath);
+  });
+
+  it.each(['browser', 'browser/public', 'vite.browser.config.ts'])('rejects newly selected browser symlink %s', async relative => {
+    const { source, output, root } = await fixture();
+    const target = path.join(root, 'external');
+    if (relative.endsWith('.ts')) await writeFile(target, 'external config');
+    else await mkdir(target);
+    await mkdir(path.dirname(path.join(source, relative)), { recursive: true });
+    await symlink(target, path.join(source, relative));
+    const result = run(source, output);
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain('symlink');
+    expect(result.stderr).not.toContain(target);
+    expect(await readdir(root)).not.toContain('snapshot');
+  });
+
   it('exports selected public files, omits local history/data and hashes exactly the copied bytes', async () => {
     const { source, output } = await fixture({
       '.git/config': 'private history\n',

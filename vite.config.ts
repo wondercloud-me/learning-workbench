@@ -3,5 +3,5 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   base: './',
   build: { outDir: 'dist' },
-  test: { environment: 'node' }
+  test: { environment: 'node', include: ['tests/**/*.test.ts', 'tests/**/*.test.tsx'] }
 });

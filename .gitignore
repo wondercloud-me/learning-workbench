@@ -1,6 +1,7 @@
 node_modules/
 dist/
 dist-main/
+dist-browser/
 release/
 .superpowers/
 *.log

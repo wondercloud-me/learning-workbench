@@ -9,7 +9,7 @@ import { pathToFileURL } from 'node:url';
 const rootFiles = new Set([
   '.gitignore', 'README.md', 'LICENSE', 'THIRD_PARTY_NOTICES.md', 'CONTRIBUTING.md',
   'SECURITY.md', 'CHANGELOG.md', 'package.json', 'pnpm-lock.yaml', 'pnpm-workspace.yaml',
-  'index.html', 'tsconfig.json', 'tsconfig.node.json', 'vite.config.ts', 'vitest.config.ts',
+  'index.html', 'tsconfig.json', 'tsconfig.node.json', 'vite.config.ts', 'vite.browser.config.ts', 'vitest.config.ts',
 ]);
 const publicDocs = new Set(['docs/public-source.md']);
 const extensions = {
@@ -17,6 +17,7 @@ const extensions = {
   tests: new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.json', '.html', '.txt']),
   scripts: new Set(['.mjs', '.cjs', '.js', '.ts', '.py', '.sh', '.ps1']),
   assets: new Set(['.png', '.icns', '.ico', '.svg', '.plist', '.jpg', '.jpeg', '.webp', '.gif']),
+  browser: new Set(['.html', '.webmanifest', '.png', '.svg', '.md']),
   licenses: new Set(['.md', '.txt', '.json', '.html']),
   website: new Set(['.html', '.css', '.js', '.mjs', '.json', '.md', '.svg', '.png', '.ico', '.jpg', '.jpeg', '.webp', '.gif', '.txt']),
   '.github': new Set(['.yml', '.yaml', '.md', '.json']),
@@ -24,7 +25,7 @@ const extensions = {
 const excludedDirectories = new Set([
   '.git', '.cache', 'node_modules', 'userdata', 'user-data', 'personal', 'private',
   'backups', 'backup', 'exports', 'tutorial-cache', 'credentials', 'secrets', 'signing',
-  'resources', 'release', 'dist', 'dist-main', '__pycache__',
+  'resources', 'release', 'dist', 'dist-main', 'dist-browser', '__pycache__',
 ]);
 const excludedFiles = /^(?:\.env(?:\..*)?|\.DS_Store|state\.json|models(?:-backup)?\.json|(?:credentials|secrets|backup)\.(?:json|ya?ml|txt)|.*\.(?:pem|key|p12|pfx|p8|sqlite|sqlite3|db|bak))$/i;
 const maxFileBytes = 8 * 1024 * 1024;

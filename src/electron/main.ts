@@ -18,6 +18,7 @@ import { validateProfile, type ApiProfile } from '../core/model-library';
 import { ModelRuntime } from '../node/model-runtime';
 import { loadStateFile } from '../node/state-storage';
 import { cleanBackup, emptyState, validateState, type AppState } from '../core/state';
+import { readBackup } from '../core/backup';
 import { personalInstruction } from '../core/preferences';
 import { LocalVoiceService } from '../node/voice';
 import { reminderDue } from '../core/reminders';
@@ -143,7 +144,7 @@ function registerIpc() {
   handle('state:load', () => state);
   handle('state:save', (_event, input) => saveState(input,true));
   handle('state:export', async () => { const result = await dialog.showSaveDialog({ defaultPath: `学习工作台备份-${new Date().toLocaleDateString('sv-SE')}.json`, filters: [{ name: 'JSON', extensions: ['json'] }] }); if (result.filePath) { await saveQueue; await writeFile(result.filePath, JSON.stringify(cleanBackup(state), null, 2)); } return !!result.filePath; });
-  handle('state:import', async () => modelOperations.restore(async () => { const result = await dialog.showOpenDialog({ properties: ['openFile'], filters: [{ name: 'JSON', extensions: ['json'] }] }); if (!result.filePaths[0]) return null; const restored = await saveState(JSON.parse(await readFile(result.filePaths[0], 'utf8'))); models.clearKeys(); return restored; }));
+  handle('state:import', async () => modelOperations.restore(async () => { const result = await dialog.showOpenDialog({ properties: ['openFile'], filters: [{ name: 'JSON', extensions: ['json'] }] }); if (!result.filePaths[0]) return null; const restored = await saveState(readBackup(JSON.parse(await readFile(result.filePaths[0], 'utf8'))).state); models.clearKeys(); return restored; }));
   // Credentials remain per-profile and in memory; no key is exposed by state or backups.
   const trustedModel = (event: Electron.IpcMainInvokeEvent) => desktopSecurity.assertTrustedIpc(event, window?.webContents);
   handle('tutorial:course',(event,url:string,refresh:boolean)=>{trustedModel(event);return tutorials.course(url,refresh===true);});

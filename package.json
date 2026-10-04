@@ -4,7 +4,9 @@
   "version": "0.9.0",
   "private": true,
   "license": "MIT",
-  "engines": { "node": ">=22.13.0" },
+  "engines": {
+    "node": ">=22.13.0"
+  },
   "packageManager": "pnpm@11.19.0",
   "type": "module",
   "main": "dist-main/main.cjs",
@@ -12,6 +14,8 @@
     "dev": "concurrently -k \"vite --host 127.0.0.1\" \"wait-on http://127.0.0.1:5173 && pnpm build:main && cross-env VITE_DEV_SERVER_URL=http://127.0.0.1:5173 electron .\"",
     "build:main": "node scripts/build-main.mjs",
     "build": "pnpm build:main && vite build",
+    "build:browser": "vite build --config vite.browser.config.ts && node scripts/build-browser-sw.mjs",
+    "preview:browser": "vite preview --config vite.browser.config.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "package:mac": "pnpm prepare:speech && pnpm build && electron-builder --mac dir",
@@ -84,6 +88,7 @@
     "electron": "^44.4.5",
     "electron-builder": "^26.15.3",
     "esbuild": "^0.28.2",
+    "fake-indexeddb": "6.2.5",
     "jsdom": "^30.1.1",
     "typescript": "^7.0.2",
     "vite": "^8.3.1",

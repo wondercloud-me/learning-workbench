@@ -1,9 +1,9 @@
-import '@vscode/codicons/dist/codicon.css';
+import {Icon} from './icon';
+export {Icon} from './icon';
 import React, { useEffect, useRef, useState } from 'react';
 import { type TabState, type WorkspaceTab } from '../core/tabs';
 import type { Preferences } from '../core/preferences';
 import type { AppState } from '../core/state';
-export function Icon({ name }: { name: string }) { return <i aria-hidden="true" className={`codicon codicon-${name}`}/>; }
 const icons = { side: 'comment-discussion', file: 'file-code', terminal: 'terminal', diff: 'diff', preview: 'browser', lesson:'book', teaching:'hubot' };
 export function Dock({ state, onSelect, onClose, onMove, onReopen, onHide, dirty, children, menu, initialWidth=48 }: {
   state: TabState; onSelect: (id: string) => void; onClose: (ids: string[]) => void; onMove: (id: string, before: string) => void; onReopen: () => void; onHide: () => void;
