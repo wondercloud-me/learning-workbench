@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'none'"><link rel="icon" href="data:,"><link rel="stylesheet" href="harness.css">
+<title>HF 公开 Origin 完整下载探针</title></head><body><main><h1>HF 公开 Origin 完整下载探针</h1>
+<p>独立实验 browser-voice-hf-host-gate-20261005。此页面验证下载正文与缓存；不运行识别、Worker、音频或麦克风。打开时不请求模型或缓存。</p>
+<p>预计公开地址：https://wondercloud-me.github.io/learning-workbench/voice-host-probe/。仅在该地址启用检查。下载七项合计 <strong>254844925 B</strong>，其中远程模型与 tokens 共 239549735 B。下载到本机 CacheStorage，显式 load 会再次读取并校验。</p>
+<section><h2>来源与许可</h2>
+<p>模型：SenseVoiceSmall INT8；原作者 FunAudioLLM / Alibaba Group；<a href="https://huggingface.co/FunAudioLLM/SenseVoiceSmall" target="_blank" rel="noopener noreferrer">原模型卡</a>；转换来源 <a href="https://huggingface.co/csukuangfj/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/tree/2365baeacb507f821a0c8120fcee3d484dba7a07" target="_blank" rel="noopener noreferrer">csukuangfj / sherpa-onnx 固定 revision</a>。</p>
+<p>模型协议：<a href="licenses/SenseVoice-MODEL-LICENSE.txt">FunASR Model Open Source License Agreement 1.1 完整文本</a>。模型不按运行时 Apache 许可声明。使用、复制、修改与分享受模型协议约束，请保留作者、来源和模型名称。</p>
+<p>运行时：k2-fsa sherpa-onnx 1.13.8 / sherpa_onnx_web；<a href="licenses/sherpa-onnx-LICENSE.txt">Apache-2.0 完整文本</a>；<a href="provenance.json">固定来源与字节元数据</a>。探针/应用模块 <a href="LICENSE">MIT 许可证</a>。本探针不实例化 WASM，512 MiB 为该二进制声明的初始线性内存而非本页面实测 RSS。</p>
+<label><input type="checkbox" id="consent">已阅读模型协议、来源及精确下载大小，主动进行一次下载</label></section>
+<nav><button id="check">1. 检查固定 manifest</button><button id="download" disabled>2. 单次下载并验证七项</button><button id="load" disabled>3. load 再校验七项</button><button id="delete" disabled>删除仅本探针 digest 缓存</button><button id="export">导出 JSON 证据</button></nav>
+<p id="progress" aria-live="polite"></p><pre id="state" aria-live="polite"></pre>
+<section><h2>保存实际截图</h2><p>由 root 填入实际 CUA 截图，PNG/JPEG 不超过 1 MiB；只下载到浏览器，不 POST 或上传。实际文件路径由浏览器下载工具记录。</p>
+<form id="screenshot-form"><label for="screenshot">实验截图 Base64</label><textarea id="screenshot" rows="3" autocomplete="off"></textarea><button type="submit">下载实际截图</button></form><p id="screenshot-status" aria-live="polite"></p></section>
+</main><script type="module" src="harness.js"></script></body></html>

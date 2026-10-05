@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 1,
+  "experiment": "browser-voice-hf-host-gate-20261005",
+  "expectedOrigin": "https://wondercloud-me.github.io",
+  "appBase": "/learning-workbench/voice-host-probe/",
+  "buildId": "hf-host-gate-20261005",
+  "manifestDigest": "7caef864672909b0927a0a9dbb9d6216bb0248862e33ebead99bc2e6c11b9348",
+  "totalBytes": 254844925,
+  "modelAndTokensBytes": 239549735,
+  "productionSourceFiles": {
+    "src/browser/voice/manifest.ts": {
+      "bytes": 4077,
+      "sha256": "37270b8de7e380498ba01b00e59adfd39b2e1a8f473cb2b00907ed7966d7c62a"
+    },
+    "src/browser/voice/model-store.ts": {
+      "bytes": 11728,
+      "sha256": "9995cc5daec923b4f3dc98d41b95d60d9558f57e06b8746e3e6dc42a8b1c40e1"
+    },
+    "src/browser/voice/resources.json": {
+      "bytes": 3851,
+      "sha256": "c913103578748ce3bc2d884945217e713409c54ebc624a0bb53b64681a32a1de"
+    }
+  },
+  "sealedSourceBuild": {
+    "base": "/learn/",
+    "buildId": "aeb4c12a-b809-41ad-81fd-9d358e6d00cd",
+    "optionalAsrEnabled": true
+  },
+  "sealedSourceManifestDigest": "9b0d95ab19cc484506ba83743c9d8486d447783d81c92926f8d93f13f9c6830d",
+  "runtime": {
+    "version": "1.13.8",
+    "archive": {
+      "url": "https://pub.dev/api/archives/sherpa_onnx_web-1.13.8.tar.gz",
+      "bytes": 4351745,
+      "sha256": "e25a3813eb080636280b23dd4b0098252902675158b66dceda1efba061adf5d7"
+    },
+    "license": {
+      "name": "Apache-2.0",
+      "source": "https://github.com/k2-fsa/sherpa-onnx/blob/11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf/LICENSE",
+      "repositoryPath": "licenses/sherpa-onnx-LICENSE.txt",
+      "bytes": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    "provenance": {
+      "pubspec": "https://github.com/k2-fsa/sherpa-onnx/blob/11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf/flutter/sherpa_onnx_web/pubspec.yaml",
+      "workflow": "https://github.com/k2-fsa/sherpa-onnx/blob/11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf/.github/workflows/release-dart-package.yaml#L923",
+      "metadata": "https://pub.dev/api/packages/sherpa_onnx_web/versions/1.13.8",
+      "registryUploaderVerified": false,
+      "executedSourceGitShaVerified": false
+    },
+    "initialMemoryBytes": 536870912,
+    "maximumMemoryBytes": 2147483648
+  },
+  "model": {
+    "kind": "senseVoice",
+    "name": "SenseVoiceSmall INT8",
+    "author": "FunAudioLLM / Alibaba Group",
+    "revision": "2365baeacb507f821a0c8120fcee3d484dba7a07",
+    "source": "https://huggingface.co/csukuangfj/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/tree/2365baeacb507f821a0c8120fcee3d484dba7a07",
+    "modelCard": "https://huggingface.co/FunAudioLLM/SenseVoiceSmall",
+    "license": {
+      "name": "FunASR Model Open Source License Agreement 1.1",
+      "source": "https://github.com/modelscope/FunASR/blob/66d7a4c264a5993a2a63ed00c1f402c296ee521a/MODEL_LICENSE",
+      "repositoryPath": "licenses/SenseVoice-MODEL-LICENSE.txt",
+      "bytes": 5306,
+      "sha256": "7dba975a2069691db4992b0592d70828b330d2f8a30a71450f4e152a554e84f8"
+    }
+  },
+  "manifest": {
+    "schemaVersion": 1,
+    "buildId": "hf-host-gate-20261005",
+    "basePath": "/learning-workbench/voice-host-probe/optional-asr/1.13.8/hf-host-gate-20261005/",
+    "modelKind": "senseVoice",
+    "runtimeVersion": "1.13.8",
+    "files": [
+      {
+        "role": "glue",
+        "filename": "sherpa-onnx-wasm-web.js",
+        "url": "/learning-workbench/voice-host-probe/optional-asr/1.13.8/hf-host-gate-20261005/sherpa-onnx-wasm-web.js",
+        "downloadUrl": "/learning-workbench/voice-host-probe/optional-asr/1.13.8/hf-host-gate-20261005/sherpa-onnx-wasm-web.js?wb-asr-download=1",
+        "bytes": 93039,
+        "sha256": "28f909145d93018c90c181035a008880ceaa94a72b66603dc7bb7c619714c23c"
+      },
+      {
+        "role": "wasm",
+        "filename": "sherpa-onnx-wasm-web.wasm",
+        "url": "/learning-workbench/voice-host-probe/optional-asr/1.13.8/hf-host-gate-20261005/sherpa-onnx-wasm-web.wasm",
+        "downloadUrl": "/learning-workbench/voice-host-probe/optional-asr/1.13.8/hf-host-gate-20261005/sherpa-onnx-wasm-web.wasm?wb-asr-download=1",
+        "bytes": 15133855,
+        "sha256": "e0d84744c39a28121f7738a161a21612788f4e8f07879a7224e74919e9831573"
+      },
+      {
+        "role": "wrapper",
+        "filename": "sherpa-onnx-asr.js",
+        "url": "/learning-workbench/voice-host-probe/optional-asr/1.13.8/hf-host-gate-20261005/sherpa-onnx-asr.js",
+        "downloadUrl": "/learning-workbench/voice-host-probe/optional-asr/1.13.8/hf-host-gate-20261005/sherpa-onnx-asr.js?wb-asr-download=1",
+        "bytes": 53867,
+        "sha256": "d51ae8e8b756ee5e53423ffada0c9702973f154f561aca7984fe0b12f4060178"
+      },
+      {
+        "role": "model",
+        "filename": "model.int8.onnx",
+        "url": "/learning-workbench/voice-host-probe/optional-asr/1.13.8/hf-host-gate-20261005/model.int8.onnx",
+        "downloadUrl": "https://huggingface.co/csukuangfj/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/resolve/2365baeacb507f821a0c8120fcee3d484dba7a07/model.int8.onnx",
+        "bytes": 239233841,
+        "sha256": "c71f0ce00bec95b07744e116345e33d8cbbe08cef896382cf907bf4b51a2cd51"
+      },
+      {
+        "role": "tokens",
+        "filename": "tokens.txt",
+        "url": "/learning-workbench/voice-host-probe/optional-asr/1.13.8/hf-host-gate-20261005/tokens.txt",
+        "downloadUrl": "https://huggingface.co/csukuangfj/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/resolve/2365baeacb507f821a0c8120fcee3d484dba7a07/tokens.txt",
+        "bytes": 315894,
+        "sha256": "f449eb28dc567533d7fa59be34e2abca8784f771850c78a47fb731a31429a1dc"
+      },
+      {
+        "role": "worker",
+        "filename": "runtime.worker.js",
+        "url": "/learning-workbench/voice-host-probe/optional-asr/1.13.8/hf-host-gate-20261005/runtime.worker.js",
+        "downloadUrl": "/learning-workbench/voice-host-probe/optional-asr/1.13.8/hf-host-gate-20261005/runtime.worker.js?wb-asr-download=1",
+        "bytes": 11355,
+        "sha256": "bf1c6a329ea21eae7d69f7fb8c95fc730669b887ca036a488310a83090edcdb6"
+      },
+      {
+        "role": "worklet",
+        "filename": "capture.worklet.js",
+        "url": "/learning-workbench/voice-host-probe/optional-asr/1.13.8/hf-host-gate-20261005/capture.worklet.js",
+        "downloadUrl": "/learning-workbench/voice-host-probe/optional-asr/1.13.8/hf-host-gate-20261005/capture.worklet.js?wb-asr-download=1",
+        "bytes": 3074,
+        "sha256": "6dee709a035fbce873693a04eaeaae3b75c12fba8654f36463784cfd6c9ff012"
+      }
+    ]
+  },
+  "bundleInputs": [
+    "src/browser/voice/resources.json",
+    "src/browser/voice/manifest.ts",
+    "src/browser/voice/model-store.ts",
+    ".cache/browser-voice-hf-host-gate-20261005/settings.json",
+    ".cache/browser-voice-hf-host-gate-20261005/harness.ts"
+  ],
+  "boundaries": {
+    "noModelOrTokensCopied": true,
+    "noWeightDownload": true,
+    "noInference": true,
+    "noAudioOrWorkerExecution": true,
+    "noServiceWorker": true,
+    "noProductBuildOrSourceChanges": true
+  },
+  "csp": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'none'",
+  "cacheDeleteScope": "growth-workbench-optional-asr-v1:7caef864672909b0927a0a9dbb9d6216bb0248862e33ebead99bc2e6c11b9348:"
+}
