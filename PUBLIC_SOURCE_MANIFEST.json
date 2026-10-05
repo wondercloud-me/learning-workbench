@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "policyVersion": 1,
-  "sourceTreeSha256": "5a93322f5cb3abc9e05a21a9f9d4d49e174effb7b99a5b66767b67587d1a21b4",
+  "sourceTreeSha256": "b2c6a9522653f8c68f8ebd2570a6500dcb2293543f595caab378e9c343aeb460",
   "files": [
     {
       "path": ".gitignore",
@@ -425,8 +425,8 @@
     },
     {
       "path": "src/browser/app.css",
-      "bytes": 11081,
-      "sha256": "f1e6c39c06e690e3e8ef2d711bf823ad77650b2f39d492bdd2f500e16e13c6e3"
+      "bytes": 11181,
+      "sha256": "89e16f3fe0fe566c9883fecdc1658b66e5c716b3ac53ce1bfc2a006631bdb9e4"
     },
     {
       "path": "src/browser/app.tsx",
@@ -455,8 +455,8 @@
     },
     {
       "path": "src/browser/onboarding.tsx",
-      "bytes": 1377,
-      "sha256": "667fbd460cf87aaa3bbbf5d677fe51b651afb31cc584d8c31c2c9900aa3deaf1"
+      "bytes": 1403,
+      "sha256": "876b682f8087d3be0ee133e2a75a606b47083aff58d50c6865a451008f7d1351"
     },
     {
       "path": "src/browser/pwa.ts",
@@ -465,8 +465,8 @@
     },
     {
       "path": "src/browser/read-aloud.tsx",
-      "bytes": 9520,
-      "sha256": "e5945a8c7120ec51f3a8ed239105a408fd87c2e5fc6fd5e80a2ec70cb7f71a5c"
+      "bytes": 10704,
+      "sha256": "06e062f9be0d2e9e22ae0481a91af74b0584f0f0fa319b030c8a669f83502168"
     },
     {
       "path": "src/browser/repository.ts",
@@ -905,8 +905,8 @@
     },
     {
       "path": "tests/browser-read-aloud.test.tsx",
-      "bytes": 27800,
-      "sha256": "4bf98406adacaae8732cf51aaf3d8d2fb5d72feef4f70fa6c78f5091264062d4"
+      "bytes": 36293,
+      "sha256": "1e715a4ccb5f9ae429e023e9cdd4bb469f94ef5114e2d7b34e23164a93475e66"
     },
     {
       "path": "tests/browser-repository.test.ts",
@@ -955,8 +955,8 @@
     },
     {
       "path": "tests/browser-voice-input.test.tsx",
-      "bytes": 20781,
-      "sha256": "9774b36a671717e0375c450fc56dc1876c5f504a15feeabd67da4074947cd193"
+      "bytes": 20981,
+      "sha256": "61913a1371c276577a8b592c6924a4a8d903ff9c9d6e7dc0bbfa52c0c14b59ca"
     },
     {
       "path": "tests/browser-voice-platform.test.ts",

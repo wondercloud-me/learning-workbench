@@ -62,6 +62,7 @@ async function mount(enabled=true){
  return{root,host,controller,repository,click,type};
 }
 type Ui=Awaited<ReturnType<typeof mount>>;
+const openReading=(ui:Ui)=>{const panel=ui.host.querySelector<HTMLDetailsElement>('[aria-label="手动朗读"] details');expect(panel).toBeTruthy();panel!.open=true;};
 const columnHost=(ui:Ui,id='c')=>ui.host.querySelector<HTMLElement>(`[data-teaching-column="${id}"]`)!;
 async function ready(ui:Ui){await ui.click('设置');await ui.click('检查本地语音资源');expect(fetch).toHaveBeenCalledTimes(1);expect(boundary.store.load).not.toHaveBeenCalled();await ui.click('下载模型到本机');await ui.click('学习');await ui.click('可选 AI 教学');}
 async function permission(ui:Ui){await ui.click('开始本地录音',columnHost(ui));const worker=boundary.workers.at(-1)!;const id=worker.messages.find((m:any)=>m.type==='init').requestId;await act(async()=>{worker.emit({type:'ready',requestId:id,heapBufferBytes:536870912});await drain();});return{worker,id};}
@@ -91,7 +92,7 @@ it('does not repeat an applied pending append after quota failure',async()=>{
  const commit=ui.repository.commit;ui.repository.commit=async()=>{throw new BrowserStorageError('quota','full');};await ui.click('确认追加到草稿',columnHost(ui));await act(async()=>{retained();await drain();});expect(ui.controller.pendingDocument().drafts.messages['question:c']).toBe('原草稿\n函数接收参数');ui.repository.commit=commit;await act(async()=>{await ui.controller.change(d=>d);await ui.controller.flush();});expect(ui.controller.pendingDocument().drafts.messages['question:c']).toBe('原草稿\n函数接收参数');expect(boundary.chat).not.toHaveBeenCalled();
 });
 it('manual reading cancels pending capture and deleting resources cancels before optional storage removal',async()=>{
- const ui=await mount();await ready(ui);const old=await permission(ui);await ui.click('试听声音');expect(old.worker.terminated).toBe(1);expect(ui.controller.isBusy()).toBe(false);await ui.click('设置');await ui.click('删除本地语音下载');expect(boundary.store.delete).toHaveBeenCalledTimes(1);expect(boundary.workers).toHaveLength(1);expect(boundary.chat).not.toHaveBeenCalled();
+ const ui=await mount();await ready(ui);openReading(ui);const old=await permission(ui);await ui.click('试听声音');expect(old.worker.terminated).toBe(1);expect(ui.controller.isBusy()).toBe(false);await ui.click('设置');await ui.click('删除本地语音下载');expect(boundary.store.delete).toHaveBeenCalledTimes(1);expect(boundary.workers).toHaveLength(1);expect(boundary.chat).not.toHaveBeenCalled();
 });
 it('holds update readiness during independent download and explicitly cancels before requesting update',async()=>{
  const ui=await mount();await ui.click('设置');await ui.click('检查本地语音资源');const download=deferred<void>();boundary.store.download=vi.fn(()=>download.promise);await ui.click('下载模型到本机');expect(boundary.readiness.isBusy()).toBe(true);boundary.store.cancel=vi.fn(async()=>download.reject(Error('cancelled')));await ui.click('保存并更新');expect(boundary.store.cancel).toHaveBeenCalled();expect(boundary.update).toHaveBeenCalledTimes(1);expect(boundary.readiness.isBusy()).toBe(false);
@@ -112,7 +113,7 @@ it('blocks backup replacement during resource work, then restores without allowi
  await act(async()=>{retained();await drain();});expect(ui.controller.pendingDocument().drafts.messages).toEqual({});expect(boundary.chat).not.toHaveBeenCalled();
 });
 it('refuses reading after unconfirmed Worker teardown and does not clear the latch by checking or deleting resources',async()=>{
- const ui=await mount();await ready(ui);const old=await permission(ui);old.worker.terminate=()=>{throw Error('native cleanup fixture');};
+ const ui=await mount();await ready(ui);openReading(ui);const old=await permission(ui);old.worker.terminate=()=>{throw Error('native cleanup fixture');};
  const read=vi.spyOn(boundary.reader,'read');await ui.click('试听声音');expect(read).not.toHaveBeenCalled();expect(ui.host.textContent).toContain('重新加载页面');
  await ui.click('设置');await ui.click('检查本地语音资源');await ui.click('删除本地语音下载');await ui.click('下载模型到本机');await ui.click('学习');await ui.click('可选 AI 教学');
  await ui.click('试听声音');expect(read).not.toHaveBeenCalled();expect(boundary.workers).toHaveLength(1);expect(boundary.permissions).toHaveLength(1);
