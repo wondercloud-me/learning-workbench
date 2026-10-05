@@ -6,3 +6,6 @@
 
 /* Voice controls follow the workbench's restrained chat styling. */
 .bubble-label{display:flex;align-items:center;gap:10px;min-height:23px}.read-aloud{margin-left:auto;font-size:11px;font-weight:400;padding:3px 7px;border-color:transparent;background:transparent;color:#747d74}.read-aloud:hover{background:#f1f3ee;color:#2d342e}.voice-input{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:8px}.voice-input button{font-size:12px;padding:6px 10px}.voice-input span{font-size:10px;color:#8c9489}.voice-input.recording button:first-child{color:#a7332b;background:#fff0ee;border-color:#e9bdb8}.side-compose .voice-input{margin:0}.voice-settings small{display:block;line-height:1.6;margin-top:12px}.voice-settings .button-row{justify-content:flex-start}
+
+.storage-status{padding:6px 24px;font-size:12px;color:var(--muted);display:flex;gap:12px;align-items:center;min-height:28px;flex-shrink:0}.storage-status.unsaved{color:#b45309}.storage-status button{font-size:12px;padding:3px 8px}.storage-status.locked{color:var(--text)}
+.desktop-lab-host{display:flex;flex:1;min-height:0;min-width:0}.desktop-lab-host[hidden]{display:none}

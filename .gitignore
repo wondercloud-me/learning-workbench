@@ -33,5 +33,6 @@ user-backups/
 recordings/
 tutorial-cache/
 /state.json
+/document-v1.json
 /models-backup.json
 /learning-backup*.json

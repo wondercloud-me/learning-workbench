@@ -1,7 +1,7 @@
 import type {ReaderRect,ReaderStatus,ReaderSelection} from '../core/reader';
 import type {CourseDirectory,LessonDocument,TutorialStats} from '../core/curriculum';
 import type { ContextTurn } from '../core/context-cache';
-import type { AppState } from '../core/state';
+import type { DesktopRuntime, DesktopSnapshot, DesktopWrite } from '../core/desktop-document';
 import type { ChatTurn } from '../core/providers';
 import type { ApiProfile } from '../core/model-library';
 import type {DailyReminderStatus, LoginStatus, NotificationTestStatus} from '../core/system-controls';
@@ -14,7 +14,7 @@ declare global {
       readerCached(url:string):Promise<LessonDocument|null>;
       onReaderUpdate(callback:(data:ReaderStatus)=>void):()=>void;
       onReaderSelection(callback:(data:ReaderSelection)=>void):()=>void;
-      onRuntimeUpdate(callback:(data:Pick<AppState,'usageRecords'|'contexts'>)=>void):()=>void;
+      onRuntimeUpdate(callback:(data:DesktopRuntime)=>void):()=>void;
       onAgentLog(callback:(log:string[])=>void):()=>void;
       tutorialCourse(url:string,refresh?:boolean):Promise<CourseDirectory>;
       tutorialLesson(url:string,refresh?:boolean):Promise<LessonDocument>;
@@ -24,6 +24,8 @@ declare global {
       tutorialClear(includePinned?:boolean):Promise<TutorialStats>;
       tutorialExternal(url:string):Promise<void>;
       quit(): Promise<void>;
+      onQuitRequest(callback:(token:string)=>Promise<number>):()=>void;
+      onQuitCancelled(callback:(token:string)=>void):()=>void;
       voiceStatus(): Promise<{ ready: boolean; model: string; reason: string }>;
       microphoneAccess(): Promise<boolean>;
       transcribe(id: string, wav: ArrayBuffer): Promise<string>;
@@ -31,7 +33,7 @@ declare global {
       listVoices(): Promise<Array<{ name: string; language: string }>>;
       speak(text: string, name: string, rate: number): Promise<void>;
       stopSpeaking(): Promise<void>;
-      load(): Promise<AppState>; save(state: AppState): Promise<AppState>; exportBackup(): Promise<boolean>; importBackup(): Promise<AppState | null>;
+      load(): Promise<DesktopSnapshot>; save(input: DesktopWrite): Promise<DesktopSnapshot>; exportBackup(generation:number): Promise<boolean>; importBackup(generation:number): Promise<DesktopSnapshot | null>;
       setModelKey(profile: ApiProfile, key: string): Promise<void>;
       modelKeyStatus(profiles: ApiProfile[]): Promise<Record<string, boolean>>;
       forgetModelKey(id: string): Promise<void>;

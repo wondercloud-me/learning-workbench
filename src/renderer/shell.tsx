@@ -1,4 +1,5 @@
 import {Icon} from './icon';
+import {version as appVersion} from '../../package.json';
 export {Icon} from './icon';
 import React, { useEffect, useRef, useState } from 'react';
 import { type TabState, type WorkspaceTab } from '../core/tabs';
@@ -45,5 +46,5 @@ export function Settings({ value, onChange, state, section, onSection, sections,
   };
   const matches=categories.filter(([id,label,,keywords])=>`${label} ${keywords}`.toLowerCase().includes(search.trim().toLowerCase()));
   const shown=search.trim()?matches:categories.filter(([id])=>id===section);
-  return <div className="settings-shell"><nav className="settings-nav" aria-label="设置分类"><div className="settings-search"><Icon name="search"/><input aria-label="搜索设置" value={search} placeholder="搜索设置" onChange={e=>setSearch(e.target.value)}/></div>{categories.map(([id,label,icon])=><button key={id} className={!search&&section===id?'selected':''} onClick={()=>{setSearch('');onSection(id);}}><Icon name={icon}/>{label}</button>)}<small className="settings-version">学习工作台 0.10.0<br/>本机版本</small></nav><div className="settings-detail">{search&&<p className="search-count">找到 {shown.length} 个设置分类</p>}{shown.map(([id])=><section className="settings-group" key={id}>{own[id]||sections[id]}</section>)}{!shown.length&&<div className="dock-empty">没有匹配的设置，试试“语音”“主题”或“发送”。</div>}</div></div>;
+  return <div className="settings-shell"><nav className="settings-nav" aria-label="设置分类"><div className="settings-search"><Icon name="search"/><input aria-label="搜索设置" value={search} placeholder="搜索设置" onChange={e=>setSearch(e.target.value)}/></div>{categories.map(([id,label,icon])=><button key={id} className={!search&&section===id?'selected':''} onClick={()=>{setSearch('');onSection(id);}}><Icon name={icon}/>{label}</button>)}<small className="settings-version">学习工作台 {appVersion}<br/>本机版本</small></nav><div className="settings-detail">{search&&<p className="search-count">找到 {shown.length} 个设置分类</p>}{shown.map(([id])=><section className="settings-group" key={id}>{own[id]||sections[id]}</section>)}{!shown.length&&<div className="dock-empty">没有匹配的设置，试试“语音”“主题”或“发送”。</div>}</div></div>;
 }

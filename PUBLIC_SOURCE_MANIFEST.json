@@ -1,12 +1,12 @@
 {
   "schemaVersion": 1,
   "policyVersion": 1,
-  "sourceTreeSha256": "51cf75042329ee5d553a37a5a73fae93bf74e40b9a0b8be9f6c08d4610aaf111",
+  "sourceTreeSha256": "8abc99c4dbac0c7abf3e16c2c490bc98c65adc184c03f720da138df59c5b2e95",
   "files": [
     {
       "path": ".gitignore",
-      "bytes": 522,
-      "sha256": "d852461202c7a9cef0b5820b1834f816bbd346d3a90c30df4751650e49199a8c"
+      "bytes": 540,
+      "sha256": "047bc2c7947c509619ff2506262bb592ad924638942ecb4527ef710107c0573d"
     },
     {
       "path": "LICENSE",
@@ -15,8 +15,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 16572,
-      "sha256": "660317f5e2b0aa4b3367758d7cccd98dee0b6c9a0b769f374171984754e1614f"
+      "bytes": 17999,
+      "sha256": "4ef436493970c37a7a8976d5819e58dfb259db57490904a04848149370b3adc3"
     },
     {
       "path": "THIRD_PARTY_NOTICES.md",
@@ -371,7 +371,7 @@
     {
       "path": "package.json",
       "bytes": 4337,
-      "sha256": "211ff8b6c89fc8460b784e4ebc4431bf352a6465138539661d8f554d4377e889"
+      "sha256": "8c7f42ed65defe86b6b5c1630ab72db6a30bf074352e3517e5db494b20f21ba2"
     },
     {
       "path": "pnpm-lock.yaml",
@@ -574,6 +574,11 @@
       "sha256": "1a01fe0a3f25701bc40eb9c064a5f8442c7fe3e342ef62bba6cde9cbd742554c"
     },
     {
+      "path": "src/core/desktop-document.ts",
+      "bytes": 572,
+      "sha256": "11d62ea1ffb2ad3260be78bc0dbf8753ae2a7371da1540d519726335723c79e8"
+    },
+    {
       "path": "src/core/lab-runner.ts",
       "bytes": 5738,
       "sha256": "53a0722b712c447d9b4aa9bd96985946ac14e195894b62ccf972096834c8f9a7"
@@ -670,13 +675,13 @@
     },
     {
       "path": "src/electron/main.ts",
-      "bytes": 21839,
-      "sha256": "577b52013bfe2ab9102caae3872436dc6a0f1e25db2d4e48030cc23e331327d5"
+      "bytes": 23349,
+      "sha256": "46a8eccca983c83d6c3604748a85db1a561b221e806359a1af7c38880314cd79"
     },
     {
       "path": "src/electron/preload.ts",
-      "bytes": 4658,
-      "sha256": "8694997f28eb0227c3df0d663208ff8db6b0258a82c2a94b596ae52a8a9a6dab"
+      "bytes": 5501,
+      "sha256": "f1b689951e8659a3c073ca5b7e417ed6a8cf955667c65fbf903929c51901e97f"
     },
     {
       "path": "src/electron/reader.ts",
@@ -692,6 +697,11 @@
       "path": "src/node/conversation.ts",
       "bytes": 2683,
       "sha256": "55af22d52dd03e1a15faeffd560c39521428d9bc90aaccb4152276daff2a819d"
+    },
+    {
+      "path": "src/node/desktop-store.ts",
+      "bytes": 6119,
+      "sha256": "301181fc236b53012e7c2b8ae676ef2c6cafb1d58868ceca90e56b14881cd7b1"
     },
     {
       "path": "src/node/model-operations.ts",
@@ -714,9 +724,14 @@
       "sha256": "bddec6b22ef6c27dba548f4af313bf3d3e746a05eb3e12007d5191ae4156998a"
     },
     {
+      "path": "src/node/quit-coordinator.ts",
+      "bytes": 2207,
+      "sha256": "5e0976232f34601d582f4a2e61b48a82809f4f15ff33161dc08393087c172d8f"
+    },
+    {
       "path": "src/node/state-storage.ts",
-      "bytes": 766,
-      "sha256": "9e2353e2e4af073570e629fcdf78b47e8da188da15f67494ee6ccb2c0ff4e426"
+      "bytes": 2522,
+      "sha256": "93c0af98bd3fe1499a8d90fd51582a3384d5c900c4b841423397ace34de91322"
     },
     {
       "path": "src/node/system-controls.ts",
@@ -759,9 +774,19 @@
       "sha256": "eed6d7dc28a4fac2da461bcdbd4425dcc00f4afc213f2fa1dcd7d777529d0b84"
     },
     {
+      "path": "src/renderer/desktop-document.ts",
+      "bytes": 9537,
+      "sha256": "66312f1b91c162e6a15e1599f6d9f281a73aad10c3fac9b0c76e60852ba8b403"
+    },
+    {
+      "path": "src/renderer/desktop-lab-panel.tsx",
+      "bytes": 4942,
+      "sha256": "24012d0be686d2c2729eb467b4ab6c5a912e74709321aafcb365c74e10c8b592"
+    },
+    {
       "path": "src/renderer/global.d.ts",
-      "bytes": 3980,
-      "sha256": "afa9b3d6b38ab354f1e318a5498f48a789d006d0b9639e435fa2c5bb1371fbf9"
+      "bytes": 4196,
+      "sha256": "9a64fdc6c6266f0461a6619019202b816fc4986d1a0a8d9858bd4c525030f8ef"
     },
     {
       "path": "src/renderer/icon.tsx",
@@ -800,8 +825,8 @@
     },
     {
       "path": "src/renderer/main.tsx",
-      "bytes": 65698,
-      "sha256": "11b08ee8344204bee62d6805e1bd5dd9240204a417daace41301ed20ccfc7a80"
+      "bytes": 66916,
+      "sha256": "06fb3b657a92653cb1bac724cff9d0014c7d9fe49352032a06ff1629b1cf716f"
     },
     {
       "path": "src/renderer/model-picker.css",
@@ -850,13 +875,13 @@
     },
     {
       "path": "src/renderer/shell.tsx",
-      "bytes": 12302,
-      "sha256": "942488737cd0333784e7ddda826c31fd5fd2d3452156bf1e02461d88ba7bfcd2"
+      "bytes": 12366,
+      "sha256": "bf0e4d670dc676a3f3c821f2c5d45729c6781bf036f779a35bab16ee3ae00815"
     },
     {
       "path": "src/renderer/style.css",
-      "bytes": 14281,
-      "sha256": "9e423c2b9df76626544156e924548fe73373d79137b83dd4ac67d62833d4feb4"
+      "bytes": 14657,
+      "sha256": "fa9ad5d54315ea6645170c94c7e80f64ed608cae8fdd468f5534e9738884f2ed"
     },
     {
       "path": "src/renderer/system-controls.tsx",
@@ -1024,9 +1049,34 @@
       "sha256": "621a7d8eb89350979e03f7b165d5e1ae3fbf6cb6cb300e4c870ae59c34a362e1"
     },
     {
+      "path": "tests/desktop-document-integration.test.ts",
+      "bytes": 5429,
+      "sha256": "f171caca52c21d1c70ff3d4a79a489d7ef39857f46034760f160e8f26970b828"
+    },
+    {
+      "path": "tests/desktop-document.test.ts",
+      "bytes": 8732,
+      "sha256": "e13c485d0f3906a90118d77f8759e5e09db576ea69b7d97c4abd76fa3ce2a46d"
+    },
+    {
+      "path": "tests/desktop-lab-panel.test.tsx",
+      "bytes": 9989,
+      "sha256": "6a4a0cf47343a8100d28c533753cd7e9252e1fe043e0e2ddf69dc79886065975"
+    },
+    {
+      "path": "tests/desktop-preload.test.ts",
+      "bytes": 2070,
+      "sha256": "5a33628542a73a722f325fa1b8373bff860da13972854b1731e5d24e94045998"
+    },
+    {
       "path": "tests/desktop-security.test.ts",
       "bytes": 6861,
       "sha256": "c6277bdc56345669f58ac11e6506bb0e663ba9262e4bd3412d2ad8e637d45c28"
+    },
+    {
+      "path": "tests/desktop-store.test.ts",
+      "bytes": 15291,
+      "sha256": "6a1512adc463b4e870af9f26996ba1f4332f1019048881cd4e36741721f49db4"
     },
     {
       "path": "tests/lab-runner.test.ts",
@@ -1089,6 +1139,11 @@
       "sha256": "8299eae9b48e57b89f45c887c44deefc59b56c7fa63366814d92fb3c858d06e1"
     },
     {
+      "path": "tests/quit-coordinator.test.ts",
+      "bytes": 4967,
+      "sha256": "36f90433fa4f76fd16e8de9924430ac6fa26e7fd291f7beebc834ef86fd1688c"
+    },
+    {
       "path": "tests/reader-native.test.ts",
       "bytes": 2292,
       "sha256": "6c4cf25193647a3c7cd84225a1b97eeed36b2e8f771f50f0a9d58d2c46e72b8f"
@@ -1120,8 +1175,8 @@
     },
     {
       "path": "tests/state-storage.test.ts",
-      "bytes": 1767,
-      "sha256": "9c61ac4ce496c0d1bef57b95281f22f98dd16adbad7e7f0085714aa22363c124"
+      "bytes": 5210,
+      "sha256": "f8a42feaf3ec48f93c9c6853e1e2ff984e2a1f747b0036b1daa8f4d107fd45b8"
     },
     {
       "path": "tests/system-controls-ui.test.tsx",

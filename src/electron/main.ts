@@ -16,8 +16,9 @@ import { spawn } from 'node:child_process';
 import { type ChatTurn, type ModelReply } from '../core/providers';
 import { validateProfile, type ApiProfile } from '../core/model-library';
 import { ModelRuntime } from '../node/model-runtime';
-import { loadStateFile } from '../node/state-storage';
-import { cleanBackup, emptyState, validateState, type AppState } from '../core/state';
+import { openDesktopStore } from '../node/desktop-store';
+import { createQuitCoordinator } from '../node/quit-coordinator';
+import type { AppState } from '../core/state';
 import { readBackup } from '../core/backup';
 import { personalInstruction } from '../core/preferences';
 import { LocalVoiceService } from '../node/voice';
@@ -33,13 +34,13 @@ const desktopSecurity = createDesktopSecurity({isPackaged: app.isPackaged, devSe
 // Development QA uses an isolated data folder and Chromium's synthetic audio device.
 if (!app.isPackaged && process.env.GROWTH_WORKBENCH_TEST_DATA) app.setPath('userData', path.resolve(process.env.GROWTH_WORKBENCH_TEST_DATA));
 const voice = new LocalVoiceService(app.isPackaged ? path.join(process.resourcesPath, 'speech') : path.resolve('resources/speech'));
-let saveQueue = Promise.resolve();
+let store: Awaited<ReturnType<typeof openDesktopStore>>;
 let window: BrowserWindow | null = null;
 let reader:TutorialReader|null=null;
 let previewWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let forceQuit = false;
-let state: AppState = emptyState();
+const currentState = () => store.snapshot().document.state;
 let session: ProjectSession | null = null;
 let chosenRoot: string | null = null;
 const models = new ModelRuntime();
@@ -47,7 +48,7 @@ const modelOperations = new ModelOperations();
 const tutorials = new TutorialStore(path.join(app.getPath('userData'),'tutorial-cache'));
 let previewContainer: string | null = null;
 
-const stateFile = () => path.join(app.getPath('userData'), 'state.json');
+const stateFile = () => path.join(app.getPath('userData'), 'document-v1.json');
 const reminderFile = () => path.join(app.getPath('userData'), 'reminder.json');
 const loginFile = () => path.join(app.getPath('userData'), 'login.json');
 const loginControls = new LoginControls({platform: process.platform, isPackaged: app.isPackaged, execPath: process.execPath,
@@ -59,6 +60,7 @@ const notifications = new NotificationControls({
   native: {supported: () => Notification.isSupported(), create: options => new Notification(options)},
   dailySettings: now => {
     const date = [now.getFullYear(), String(now.getMonth() + 1).padStart(2, '0'), String(now.getDate()).padStart(2, '0')].join('-');
+    const state=currentState();
     return {time: state.settings.reminderTime, enabled: state.settings.reminderEnabled, checkedIn: state.checkins.some(item => item.date === date), startDate: state.settings.reminderDate};
   },
   focus: () => {window?.show(); window?.focus();},
@@ -70,25 +72,30 @@ async function atomicWrite(file: string, data: string | Buffer) {
   await rename(temp, file);
 }
 async function loadState() {
-  const loaded = await loadStateFile(stateFile());
-  state = loaded.state;
-  if (loaded.recoveryFile) await dialog.showMessageBox({type:'warning',title:'学习记录需要恢复',message:'原学习记录暂时无法读取，已保留完整副本。',detail:`软件将从空白状态启动。请保留此文件，以便恢复原记录：\n${loaded.recoveryFile}`,buttons:['知道了']});
-  // Finish authorized first-launch initialization before the renderer can query it.
+  store = await openDesktopStore({file:stateFile(),legacyFile:path.join(app.getPath('userData'),'state.json'),appVersion:app.getVersion()});
+  if (store.recoveryFile) await dialog.showMessageBox({type:'warning',title:'学习记录需要恢复',message:'原学习记录暂时无法读取，已保留完整副本。',detail:`软件将从空白状态启动。请保留此文件，以便恢复原记录：\n${store.recoveryFile}`,buttons:['知道了']});
   await Promise.all([notifications.initialize(), loginControls.initialize()]);
 }
-async function commitState(change: (current:AppState)=>AppState) {
-  let next!:AppState;
-  const pending=saveQueue.then(async()=>{ next=change(state); await atomicWrite(stateFile(),JSON.stringify(next,null,2)); state=next; });
-  saveQueue=pending.catch(()=>{});await pending;return next;
+async function persistRuntime(generation:number, change:(current:AppState)=>AppState) {
+  const data=await store.runtime(generation,change);
+  window?.webContents.send('runtime:update',data);
 }
-async function saveState(input:unknown, preserveRuntime=false) {
-  const incoming=validateState(input);
-  return commitState(current=>preserveRuntime?{...incoming,usageRecords:current.usageRecords,contexts:current.contexts}:incoming);
-}
-async function persistRuntime(change:(current:AppState)=>AppState) {
-  const saved=await commitState(change);
-  window?.webContents.send('runtime:update',{usageRecords:saved.usageRecords,contexts:saved.contexts});
-}
+const quitCoordinator=createQuitCoordinator({
+  requestFlush:token=>{
+    if(!window || window.isDestroyed() || window.webContents.isDestroyed())throw Error('学习页面不可用，无法确认草稿已保存。');
+    window.webContents.send('app:quit-request',token);
+  },
+  // Do not discard a model request's eventual runtime record during a clean quit.
+  flush:()=>modelOperations.restore(()=>store.flush()),
+  confirmDiscard:async error=>{
+    if(window && !window.isDestroyed())window.show();
+    const result=await dialog.showMessageBox({type:'warning',title:'尚未完成保存',message:'当前输入尚未确认保存，是否取消退出？',detail:error instanceof Error?error.message:String(error),buttons:['取消退出，继续保存','放弃未保存修改并退出'],defaultId:0,cancelId:0,noLink:true});
+    return result.response===1;
+  },
+  finish:()=>{forceQuit=true;app.quit();},
+  release:token=>{if(window && !window.isDestroyed() && !window.webContents.isDestroyed())window.webContents.send('app:quit-cancelled',token);},
+  timeoutMs:15000,
+});
 
 function requireSession() { if (!session) throw new Error('先选择项目并创建 Docker 工作副本'); return session; }
 async function waitForPreview(url: string): Promise<void> {
@@ -120,7 +127,7 @@ function mainWindow() {
   reader=new TutorialReader(window,tutorials);
   window.on('hide', () => voice.cancelAll());
   window.loadURL(desktopSecurity.launchUrl);
-  window.on('close', event => { if (forceQuit) return; if (state.settings.preferences.closeToTray) { event.preventDefault(); window?.hide(); } else { forceQuit = true; app.quit(); } });
+  window.on('close', event => { if (forceQuit) return; event.preventDefault(); if (currentState().settings.preferences.closeToTray) window?.hide(); else app.quit(); });
 }
 
 function createTray() {
@@ -131,7 +138,7 @@ function createTray() {
   tray.setToolTip('学习工作台');
   tray.setContextMenu(Menu.buildFromTemplate([
     { label: '打开学习工作台', click: () => { window?.show(); window?.focus(); } },
-    { label: '退出', click: () => { forceQuit = true; app.quit(); } }
+    { label: '退出', click: () => app.quit() }
   ]));
   tray.on('double-click', () => window?.show());
 }
@@ -154,10 +161,22 @@ function registerIpc() {
   handle('voice:voices', event => { trustedVoice(event); return voice.listVoices(); });
   handle('voice:speak', (event, text: string, name: string, rate: number) => { trustedVoice(event); return voice.speak(text, name, rate); });
   handle('voice:stop', event => { trustedVoice(event); voice.stopSpeaking(); });
-  handle('state:load', () => state);
-  handle('state:save', (_event, input) => saveState(input,true));
-  handle('state:export', async () => { const result = await dialog.showSaveDialog({ defaultPath: `学习工作台备份-${new Date().toLocaleDateString('sv-SE')}.json`, filters: [{ name: 'JSON', extensions: ['json'] }] }); if (result.filePath) { await saveQueue; await writeFile(result.filePath, JSON.stringify(cleanBackup(state), null, 2)); } return !!result.filePath; });
-  handle('state:import', async () => modelOperations.restore(async () => { const result = await dialog.showOpenDialog({ properties: ['openFile'], filters: [{ name: 'JSON', extensions: ['json'] }] }); if (!result.filePaths[0]) return null; const restored = await saveState(readBackup(JSON.parse(await readFile(result.filePaths[0], 'utf8'))).state); models.clearKeys(); return restored; }));
+  handle('state:load', () => store.load());
+  handle('state:save', (_event, input) => store.save(input));
+  handle('state:export', (_event,generation:number) => modelOperations.restore(()=>store.export(generation,async backup=>{
+    const result=await dialog.showSaveDialog({defaultPath:`学习工作台备份-${new Date().toLocaleDateString('sv-SE')}.json`,filters:[{name:'JSON',extensions:['json']}]});
+    if(!result.filePath)return false;
+    await atomicWrite(result.filePath,JSON.stringify(backup,null,2));return true;
+  })));
+  handle('state:import', (_event,generation:number) => modelOperations.restore(async()=>{
+    const restored=await store.restore(generation,async()=>{
+      const result=await dialog.showOpenDialog({properties:['openFile'],filters:[{name:'JSON',extensions:['json']}]});
+      if(!result.filePaths[0])return null;
+      return readBackup(JSON.parse(await readFile(result.filePaths[0],'utf8')));
+    });
+    if(restored)models.clearKeys();
+    return restored;
+  }));
   // Credentials remain per-profile and in memory; no key is exposed by state or backups.
   const trustedModel = (event: Electron.IpcMainInvokeEvent) => desktopSecurity.assertTrustedIpc(event, window?.webContents);
   handle('tutorial:course',(event,url:string,refresh:boolean)=>{trustedModel(event);return tutorials.course(url,refresh===true);});
@@ -175,19 +194,22 @@ function registerIpc() {
   handle('model:set-key', (event, profile: ApiProfile, key: string) => { trustedModel(event); models.setKey(validateProfile(profile), key); });
   handle('model:key-status', (event, profiles: ApiProfile[]) => { trustedModel(event); return Object.fromEntries(profiles.map(profile => [profile.id, models.hasKey(validateProfile(profile))])); });
   handle('model:forget-key', (event, id: string) => { trustedModel(event); models.forgetKey(id); });
-  const trackedRequest = (snapshot: ReturnType<typeof modelSnapshot>, system:string, turns:ChatTurn[], purpose:UsagePurpose, timeout=180000) => trackRequest(snapshot,system,turns,purpose,
-    record=>persistRuntime(current=>({...current,usageRecords:[...current.usageRecords,record]})),timeout);
+  const trackedRequest = (generation:number, snapshot: ReturnType<typeof modelSnapshot>, system:string, turns:ChatTurn[], purpose:UsagePurpose, timeout=180000) => trackRequest(snapshot,system,turns,purpose,
+    record=>persistRuntime(generation,current=>({...current,usageRecords:[...current.usageRecords,record]})),timeout);
   handle('model:test' , async (event, profile: ApiProfile, model: string) => modelOperations.run(async () => {
     trustedModel(event);
+    const generation=store.snapshot().generation;
     const snapshot = modelSnapshot(profile, model);
-    await trackedRequest(snapshot,'这是接口连通性检查。请只回复 OK。', [{ role: 'user', content: 'OK' }],'test',20000);
+    await trackedRequest(generation,snapshot,'这是接口连通性检查。请只回复 OK。', [{ role: 'user', content: 'OK' }],'test',20000);
     return `${snapshot.profile.name} / ${snapshot.settings.model} 已成功返回文本`;
   }));
   handle('model:chat', async (event, system: string, history:ContextTurn[], profile:ApiProfile, model:string, options:{scope:string;task:string;compactOnly?:boolean;purpose?:'chat'|'side';lesson?:{url:string;version:string;sectionId:string}}) => modelOperations.run(async () => {
     trustedModel(event);
     if(!options?.scope || !Array.isArray(history))throw new Error('聊天上下文缺少标识');
+    const generation=store.snapshot().generation;
     const snapshot=modelSnapshot(profile,model);
-    await saveQueue;
+    await store.flush();
+    const state=currentState();
     const bound=state.columns.find(c=>c.id===options.scope)?.source;
     let task=options.task;
     if(bound && !options.compactOnly){
@@ -197,8 +219,8 @@ function registerIpc() {
       task+=`\n${sourceMaterial(bound,request.sectionId,document)}`;
     } else if(options.lesson)throw new Error('课程栏目已改变，请重新打开章节');
     const result=await runConversation({history,system:`${system}\n${personalInstruction(state.settings.preferences)}`,task,context:state.contexts[options.scope]??{},window:snapshot.profile.contextWindows?.[model],profileId:snapshot.profile.id,model,compactOnly:options.compactOnly,purpose:options.purpose},
-      (fixed,turns,purpose)=>trackedRequest(snapshot,fixed,turns,purpose),
-      context=>persistRuntime(current=>({...current,contexts:{...current.contexts,[options.scope]:context}})));
+      (fixed,turns,purpose)=>trackedRequest(generation,snapshot,fixed,turns,purpose),
+      context=>persistRuntime(generation,current=>({...current,contexts:{...current.contexts,[options.scope]:context}})));
     return result.reply?.text ?? '较早对话已整理；原聊天和能力证据仍保留。';
   }));
   handle('project:choose', async () => { const result = await dialog.showOpenDialog({ properties: ['openDirectory'] }); if (!result.filePaths[0]) return null; chosenRoot = result.filePaths[0]; return { root: chosenRoot, entries: await projectTopEntries(chosenRoot), report: await preflight(chosenRoot) }; });
@@ -212,10 +234,11 @@ function registerIpc() {
   handle('project:run', (_event, command: string) => dockerRun(requireSession(), command));
   handle('project:agent', async (event, goal: string, profile: ApiProfile, model: string) => modelOperations.run(async () => {
     trustedModel(event);
+    const generation=store.snapshot().generation;
     const snapshot = modelSnapshot(profile, model);
     const current = requireSession();
     return runProjectAgent(await listFiles(current.copy),goal,
-      async (instruction,history)=>(await trackedRequest(snapshot,instruction,history,'agent')).text,
+      async (instruction,history)=>(await trackedRequest(generation,snapshot,instruction,history,'agent')).text,
       {read:async relative=>readFile(await safeProjectPath(current.copy,relative),'utf8'),
        write:async (relative,content)=>{const dest=await safeProjectPath(current.copy,relative,true);await mkdir(path.dirname(dest),{recursive:true});await writeFile(dest,content);},
        run:command=>dockerRun(current,command)},
@@ -246,7 +269,12 @@ function registerIpc() {
     });
   });
   handle('preview:open', (_event, url: string) => { if (!/^http:\/\/127\.0\.0\.1:\d+$/.test(url)) throw new Error('只允许本机预览'); previewWindow?.close(); previewWindow = new BrowserWindow({ width: 1100, height: 750, webPreferences: { sandbox: true, nodeIntegration: false, contextIsolation: true } }); previewWindow.loadURL(url); });
-  handle('app:quit', () => { forceQuit = true; app.quit(); });
+  handle('app:quit', () => app.quit());
+  handle('app:quit-ready', (_event,input:{token:string;generation?:number;error?:string})=>{
+    if(!input || typeof input.token!=='string')throw Error('退出确认格式不正确');
+    const error=typeof input.error==='string'?input.error:input.generation===store.snapshot().generation?undefined:'学习文档已改变，请重新保存后退出';
+    return quitCoordinator.acknowledge(input.token,error);
+  });
   handle('app:login-status', () => loginControls.status());
   handle('app:set-login', (_event, enabled: unknown) => loginControls.set(enabled));
   handle('app:reminder-status', () => notifications.status());
@@ -274,4 +302,13 @@ app.whenReady().then(async () => {
   }, 30000).unref();
 }).catch(async error => { console.error('学习工作台启动失败', error); await dialog.showMessageBox({type:'error',title:'无法启动学习工作台',message:'读取本机资料失败，原文件未被覆盖。',detail:error instanceof Error?error.message:String(error)}); forceQuit=true;app.quit(); });
 app.on('window-all-closed', () => {});
-app.on('before-quit', () => { forceQuit = true; voice.cancelAll(); if (previewContainer) spawn('docker', ['rm', '-f', previewContainer]); if (session) void closeProject(session); });
+app.on('before-quit', event => {
+  if(!forceQuit){
+    event.preventDefault();
+    void quitCoordinator.request().catch(error=>console.error('退出保存检查失败',error));
+    return;
+  }
+  voice.cancelAll();
+  if (previewContainer) spawn('docker', ['rm', '-f', previewContainer]);
+  if (session) void closeProject(session);
+});

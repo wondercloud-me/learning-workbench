@@ -17,6 +17,21 @@ const calls = {
   tutorialClear: (includePinned=false)=>ipcRenderer.invoke('tutorial:clear',includePinned),
   tutorialExternal: (url:string)=>ipcRenderer.invoke('tutorial:external',url),
   quit: () => ipcRenderer.invoke('app:quit'),
+  onQuitRequest: (callback: (token:string)=>Promise<number>) => {
+    const listener = (_event:unknown, token:string) => {
+      void Promise.resolve().then(()=>callback(token)).then(
+        generation=>ipcRenderer.invoke('app:quit-ready',{token,generation}),
+        error=>ipcRenderer.invoke('app:quit-ready',{token,error:error instanceof Error?error.message:String(error)})
+      ).catch(()=>{});
+    };
+    ipcRenderer.on('app:quit-request',listener);
+    return ()=>ipcRenderer.removeListener('app:quit-request',listener);
+  },
+  onQuitCancelled: (callback:(token:string)=>void) => {
+    const listener=(_event:unknown,token:string)=>callback(token);
+    ipcRenderer.on('app:quit-cancelled',listener);
+    return ()=>ipcRenderer.removeListener('app:quit-cancelled',listener);
+  },
   voiceStatus: () => ipcRenderer.invoke('voice:status'),
   microphoneAccess: () => ipcRenderer.invoke('voice:microphone'),
   transcribe: (id: string, wav: ArrayBuffer) => ipcRenderer.invoke('voice:transcribe', id, wav),
@@ -26,8 +41,8 @@ const calls = {
   stopSpeaking: () => ipcRenderer.invoke('voice:stop'),
   load: () => ipcRenderer.invoke('state:load'),
   save: (state: unknown) => ipcRenderer.invoke('state:save', state),
-  exportBackup: () => ipcRenderer.invoke('state:export'),
-  importBackup: () => ipcRenderer.invoke('state:import'),
+  exportBackup: (generation:number) => ipcRenderer.invoke('state:export',generation),
+  importBackup: (generation:number) => ipcRenderer.invoke('state:import',generation),
   setModelKey: (profile: unknown, key: string) => ipcRenderer.invoke('model:set-key', profile, key),
   modelKeyStatus: (profiles: unknown[]) => ipcRenderer.invoke('model:key-status', profiles),
   forgetModelKey: (id: string) => ipcRenderer.invoke('model:forget-key', id),
