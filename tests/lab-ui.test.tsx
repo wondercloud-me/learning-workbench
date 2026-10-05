@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import React, {act, useState} from 'react';
 import {createRoot, type Root} from 'react-dom/client';
-import {afterEach, expect, it} from 'vitest';
-import {beginLab, emptyLab, type LabRun, type LabState} from '../src/core/lab';
+import {afterEach, expect, it, vi} from 'vitest';
+import {beginLab, emptyLab, revealLabHint, saveLabAttempt, setLabCode, type LabRun, type LabState} from '../src/core/lab';
 import {LabPanel, type LabPanelProps} from '../src/renderer/lab-panel';
 import {emptyBrowserDocument, validateBrowserDocument, type LabDraft} from '../src/core/browser-state';
 
@@ -13,6 +13,7 @@ afterEach(async () => {
     await act(async () => root.unmount());
     host.remove();
   }
+  vi.useRealTimers();
 });
 
 const greetingCode = 'function greeting(name) { return "你好，" + name; }';
@@ -32,10 +33,12 @@ async function mount(execute: LabPanelProps['execute'], initial = emptyLab(), op
   let value = initial;
   let drafts = options.drafts || {};
   let publishDrafts!: (next: typeof drafts) => void;
+  let publishState!: (next: LabState) => void;
   function Harness() {
     const [state, setState] = useState(initial);
     const [draftState, setDraftState] = useState(drafts);
     publishDrafts = next => {drafts = next; setDraftState(next);};
+    publishState = next => {value = next; setState(next);};
     return <LabPanel value={state} execute={execute} drafts={options.desktop ? undefined : draftState} onDraftChange={options.desktop ? undefined : (key, next) => {const updated = {...drafts, [key]: next}; drafts = options.projectDrafts ? options.projectDrafts(updated, value) : updated; setDraftState(drafts);}} onChange={next => {const addedAttempt = next.attempts.length > value.attempts.length || !!options.save && next.attempts !== value.attempts; value = next; setState(next); if (addedAttempt && options.save) return options.save(next);}}/>;
   }
   await act(async () => root.render(<Harness/>));
@@ -51,8 +54,99 @@ async function mount(execute: LabPanelProps['execute'], initial = emptyLab(), op
     const setter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!;
     await act(async () => {setter.call(field, text); field.dispatchEvent(new Event('input', {bubbles: true}));});
   };
-  return {host, root, button, click, input, value: () => value, drafts: () => drafts, replaceDrafts: async (next: typeof drafts) => {await act(async () => publishDrafts(next));}};
+  return {host, root, button, click, input, value: () => value, drafts: () => drafts, replaceState: async (next: LabState) => {await act(async () => publishState(next));}, replaceDrafts: async (next: typeof drafts) => {await act(async () => publishDrafts(next));}};
 }
+
+const reviewNow='2026-10-05T10:00:00.000Z',reviewPrior='2026-10-03T10:00:00.000Z';
+function reviewClock(){vi.useFakeTimers({toFake:['Date']});vi.setSystemTime(new Date(reviewNow));}
+const pricesCode='function totalPrices(prices) { let sum = 0; for (const price of prices) sum += price; return sum; }';
+const passedPrices=(code:string):LabRun=>({code,taskId:'total-prices',error:'',logs:[],checks:[
+ {label:'多件商品',passed:true,expected:35,actual:35},{label:'空购物车',passed:true,expected:0,actual:0},{label:'免费商品',passed:true,expected:7,actual:7},
+]});
+function pricesPrior(lab=emptyLab(),at=reviewPrior){
+ const studied=setLabCode(beginLab(lab,'lists','practice',at),'lists','practice',pricesCode);
+ return saveLabAttempt(studied,'lists','practice',passedPrices(pricesCode),'循环逐项拿到价格，把每个价格累加到总价再返回。',at);
+}
+function retainedClick(button:HTMLElement){const key=Object.keys(button).find(k=>k.startsWith('__reactProps$'))!;return (button as any)[key].onClick as ()=>void;}
+
+it('offers all eligible units and selecting a review preserves the explicit study gate without executing or writing evidence',async()=>{
+ reviewClock();let lab=pricesPrior();lab.attempts[0].helpLevel='hinted';
+ const routeCode='function route(path) { return path === "/health" ? {status:200,body:"ok"} : {status:404,body:"not found"}; }';
+ lab=setLabCode(beginLab(lab,'routing','practice',reviewPrior),'routing','practice',routeCode);
+ lab=saveLabAttempt(lab,'routing','practice',{code:routeCode,taskId:'health-route',error:'',logs:[],checks:[
+  {label:'健康检查',passed:true,expected:{status:200,body:'ok'},actual:{status:200,body:'ok'}},
+  {label:'未知路径',passed:true,expected:{status:404,body:'not found'},actual:{status:404,body:'not found'}},
+  {label:'根路径也未配置',passed:true,expected:{status:404,body:'not found'},actual:{status:404,body:'not found'}},
+ ]},'读取路径后返回相应状态码和正文，未知路径使用默认响应。',reviewPrior);
+ let executions=0;const ui=await mount(async code=>{executions++;return passedGreeting(code);},lab);const before=structuredClone(ui.value());
+ expect([...ui.host.querySelectorAll('.lab-review-actions button')].map(b=>b.textContent?.trim())).toEqual(['查看循环的隔日变式','查看路由的隔日变式']);
+ await ui.click('查看循环的隔日变式');expect(ui.host.querySelector('.lab-units [aria-pressed="true"]')!.textContent).toContain('循环');
+ expect(ui.button('隔日变式').getAttribute('aria-pressed')).toBe('true');expect(ui.host.querySelector('[aria-label="你的代码"]')).toBeNull();
+ expect(ui.host.textContent).not.toContain('排除超额');expect(ui.host.textContent).not.toContain('只累加不超过 limit');
+ expect(executions).toBe(0);expect(ui.value()).toEqual(before);expect(ui.value().sessions['lists:transfer']).toBeUndefined();
+});
+
+it('omits empty review UI for same-day, failed, unrun or already-passed-transfer work',async()=>{
+ reviewClock();const sameDay=pricesPrior(emptyLab(),reviewNow);
+ const failed=beginLab(emptyLab(),'lists','practice',reviewPrior);
+ const failedSaved=saveLabAttempt(setLabCode(failed,'lists','practice',pricesCode),'lists','practice',{...passedPrices(pricesCode),error:'SyntaxError'},'这次运行失败，观察到语法错误所以继续修改。',reviewPrior);
+ let completed=pricesPrior();completed=beginLab(completed,'lists','transfer','2026-10-04T10:00:00.000Z');
+ const code='function totalPrices(prices, limit) { let sum=0; for(const price of prices) if(price<=limit)sum+=price; return sum; }';
+ completed=setLabCode(completed,'lists','transfer',code);
+ completed=saveLabAttempt(completed,'lists','transfer',{code,taskId:'total-filter',error:'',logs:[],checks:[
+  {label:'排除超额',passed:true,expected:15,actual:15},{label:'含边界',passed:true,expected:10,actual:10},
+  {label:'没有匹配商品',passed:true,expected:0,actual:0},{label:'空数组',passed:true,expected:0,actual:0},
+ ]},'先检查价格是否不超过限制，只累加满足条件的价格。','2026-10-04T10:00:00.000Z');
+ const ui=await mount(async code=>passedGreeting(code),sameDay);
+ for(const state of [sameDay,failedSaved,beginLab(emptyLab(),'lists','practice',reviewPrior),completed]){
+  await ui.replaceState(state);expect(ui.host.querySelector('.lab-review-actions')).toBeNull();
+ }
+});
+
+it('disables review navigation during saving and excludes pending or failed candidates until the commit succeeds',async()=>{
+ reviewClock();let reject!:(cause:Error)=>void,resolve!:()=>void;
+ const ui=await mount(async code=>passedGreeting(code),pricesPrior(),{save:()=>new Promise<void>((done,fail)=>{resolve=done;reject=fail;})});
+ const held=retainedClick(ui.button('查看循环的隔日变式'));
+ await ui.click('我学过了，开始动手');await ui.input('你的代码',greetingCode);await ui.input('用自己的话解释','把传入名字与前缀拼接，返回新的欢迎字符串。');await ui.click('运行代码');await ui.click('保存此次产出');
+ expect(ui.button('查看循环的隔日变式').disabled).toBe(true);await act(async()=>held());expect(ui.button('基础任务').getAttribute('aria-pressed')).toBe('true');
+ const candidateId=ui.value().attempts.at(-1)!.id;
+ vi.setSystemTime(new Date('2026-10-06T10:00:00.000Z'));await ui.replaceState({...ui.value()});
+ expect(ui.host.querySelector('.lab-review-actions')!.textContent).not.toContain('查看函数');
+ await act(async()=>reject(Error('injected save failure')));expect(ui.button('查看循环的隔日变式').disabled).toBe(false);
+ expect(ui.host.querySelector('.lab-review-actions')!.textContent).not.toContain('查看函数');
+ await ui.click('保存此次产出');expect(ui.value().attempts).toHaveLength(2);expect(ui.value().attempts.at(-1)!.id).toBe(candidateId);
+ await act(async()=>resolve());vi.setSystemTime(new Date('2026-10-07T10:00:00.000Z'));await ui.replaceState({...ui.value()});
+ expect(ui.button('查看函数的隔日变式')).toBeTruthy();expect(ui.value().attempts).toHaveLength(2);
+});
+
+it('review navigation aborts old execution and restores existing transfer code explanation help and historical-run restrictions',async()=>{
+ reviewClock();let lab=beginLab(pricesPrior(),'lists','transfer','2026-10-04T10:00:00.000Z');
+ lab=setLabCode(lab,'lists','transfer','function totalPrices(prices, limit) { return 0; }');lab=revealLabHint(lab,'lists','transfer');
+ lab=beginLab(lab,'functions','practice',reviewPrior);lab=setLabCode(lab,'functions','practice',greetingCode);
+ const historical:LabRun={code:lab.sessions['lists:transfer'].code,taskId:'total-filter',error:'',logs:['原变式运行日志'],checks:[]};
+ let signal:AbortSignal|undefined,finish!:(value:LabRun)=>void;const ui=await mount((_code,_task,abort)=>{signal=abort;return new Promise(done=>{finish=done;});},lab,{drafts:{
+  'lists:transfer':{explanation:'这份变式的解释和代码已经开始，但尚未保存通过产出。',lastRun:historical,updatedAt:reviewPrior},
+ }});
+ await ui.click('运行代码');const before=structuredClone(ui.value());await ui.click('查看循环的隔日变式');expect(signal?.aborted).toBe(true);
+ expect(ui.host.querySelector<HTMLTextAreaElement>('[aria-label="你的代码"]')!.value).toBe(historical.code);
+ expect(ui.host.querySelector<HTMLTextAreaElement>('[aria-label="用自己的话解释"]')!.value).toContain('这份变式的解释');
+ expect(ui.host.querySelector('[aria-label="上次运行结果"]')!.textContent).toContain('原变式运行日志');expect(ui.host.textContent).toContain('看过提示');expect(ui.button('保存此次产出').disabled).toBe(true);
+ await act(async()=>finish(passedGreeting(greetingCode)));expect(ui.host.querySelector('[aria-label="本次运行结果"]')).toBeNull();expect(ui.value()).toEqual(before);
+});
+
+it('rejects retained review handlers for hidden inert detached collapsed restored or no-longer-due views',async()=>{
+ reviewClock();const initial=pricesPrior();const ui=await mount(async code=>passedGreeting(code),initial);const held=retainedClick(ui.button('查看循环的隔日变式'));
+ const unchanged=()=>expect(ui.host.querySelector('.lab-units [aria-pressed="true"]')!.textContent).toContain('函数');
+ ui.host.hidden=true;await act(async()=>held());unchanged();ui.host.hidden=false;
+ ui.host.setAttribute('inert','');await act(async()=>held());unchanged();ui.host.removeAttribute('inert');
+ ui.host.remove();await act(async()=>held());unchanged();document.body.append(ui.host);
+ const wrapper=document.createElement('details');document.body.append(wrapper);wrapper.append(ui.host);await act(async()=>held());unchanged();document.body.append(ui.host);wrapper.remove();
+ vi.setSystemTime(new Date(reviewPrior));await act(async()=>held());unchanged();vi.setSystemTime(new Date(reviewNow));
+ await ui.replaceState(structuredClone(initial));await act(async()=>held());unchanged();
+ const restored=retainedClick(ui.button('查看循环的隔日变式'));await ui.replaceDrafts({'lists:transfer':{explanation:'恢复得到的变式草稿，尚未开始当前任务。',lastRun:null,updatedAt:reviewNow}});
+ await act(async()=>restored());unchanged();await ui.click('查看循环的隔日变式');expect(ui.host.querySelector('.lab-units [aria-pressed="true"]')!.textContent).toContain('循环');
+ expect(ui.value()).toEqual(initial);
+});
 
 it('keeps the task and checks hidden until the learner explicitly confirms studying', async () => {
   const ui = await mount(async code => passedGreeting(code));

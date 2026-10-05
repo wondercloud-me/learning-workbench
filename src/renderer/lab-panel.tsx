@@ -71,9 +71,10 @@ export function LabPanel({value, onChange, drafts, onDraftChange, execute = exec
   const pendingAttemptIds = useRef<Record<string, string>>({});
   const composing = useRef(false);
   const mounted = useRef(true);
+  const reviewActions = useRef<HTMLDivElement>(null);
   const localDrafts = useRef<Record<string, LabDraft>>({...drafts});
-  const current = useRef({value, unitId, mode, explanation});
-  current.current = {value, unitId, mode, explanation};
+  const current = useRef({value, unitId, mode, explanation, drafts});
+  current.current = {value, unitId, mode, explanation, drafts};
   const key = `${unitId}:${mode}`;
   const unit = practiceUnit(unitId);
   const task = labTask(unitId, mode);
@@ -83,7 +84,9 @@ export function LabPanel({value, onChange, drafts, onDraftChange, execute = exec
   const helpLevel = session?.helpLevel || (session?.hintsSeen ? 'hinted' : 'independent');
   const pendingIds = Object.values(pendingAttemptIds.current);
   const committedView = {...value, attempts: value.attempts.filter(attempt => !pendingIds.includes(attempt.id))};
-  const summary = labSummary(committedView, unitId, new Date().toISOString());
+  const now = new Date().toISOString();
+  const summary = labSummary(committedView, unitId, now);
+  const reviews = practiceUnits.filter(item => labSummary(committedView, item.id, now).transferDue);
   const attempts = committedView.attempts.filter(attempt => attempt.unitId === unitId).slice().reverse();
   const passed = !!run && labPassed(run, unitId, mode);
   const canSave = !!run && !historical && !!session && run.code === session.code && run.taskId === task.id && explanation.trim().length >= 8 && !busy && !saving && !saved;
@@ -100,6 +103,20 @@ export function LabPanel({value, onChange, drafts, onDraftChange, execute = exec
     setExplanation(next?.explanation || ''); setError(''); setNotice(''); setSaved(false);
   }
   function resetView() {restoreDraft();}
+  function viewReview(target: string) {
+    const latest = current.current;
+    // Retained callbacks cannot select a view after its state/drafts were
+    // replaced, or while its currently mounted navigation is unavailable.
+    if (!mounted.current || savePending.current || !reviewActions.current?.isConnected
+      || latest.value !== value || latest.drafts !== drafts || latest.unitId !== unitId || latest.mode !== mode) return;
+    for (let parent: HTMLElement | null = reviewActions.current; parent; parent = parent.parentElement) {
+      if (parent.hidden || parent.inert || parent.hasAttribute('inert') || parent instanceof HTMLDetailsElement && !parent.open) return;
+    }
+    const pending = Object.values(pendingAttemptIds.current);
+    const committed = {...latest.value, attempts: latest.value.attempts.filter(item => !pending.includes(item.id))};
+    if (!labSummary(committed, target, new Date().toISOString()).transferDue || latest.unitId === target && latest.mode === 'transfer') return;
+    resetView(); setUnitId(target); setMode('transfer');
+  }
   function persistDraft(nextExplanation: string, lastRun: LabRun | null) {
     const draft: LabDraft = {explanation: nextExplanation, lastRun, updatedAt: new Date().toISOString()};
     localDrafts.current[key] = draft;
@@ -219,6 +236,7 @@ export function LabPanel({value, onChange, drafts, onDraftChange, execute = exec
   return <div className="lab-panel">
     <header className="lab-header"><div className="lab-section-title"><Icon name="code"/><h1>动手学习</h1></div><p>先看懂一个例子，再用自己的代码完成一件事。</p><small>本机运行，无需连接模型。产出保留代码、结果和自己的解释。</small></header>
     <nav className="lab-units" aria-label="学习单元">{practiceUnits.map(item => <button key={item.id} disabled={saving} aria-pressed={unitId === item.id} className={unitId === item.id ? 'selected' : ''} onClick={() => {if (item.id !== unitId) {resetView(); setUnitId(item.id); setMode('practice');}}}><Icon name={item.id === 'functions' ? 'symbol-method' : item.id === 'lists' ? 'list-unordered' : 'server'}/><span>{item.title}</span></button>)}</nav>
+    {!!reviews.length && <div className="lab-review-actions" ref={reviewActions} aria-label="可以继续的隔日变式"><h2>继续隔日变式</h2><p className="lab-muted">这些基础任务的通过产出已在之前日期保存。查看后，由你决定何时开始。</p><div>{reviews.map(item => <button key={item.id} disabled={saving} onClick={() => viewReview(item.id)}><Icon name="history"/>查看{item.title.split('：')[0]}的隔日变式</button>)}</div></div>}
     <div className="lab-content">
       <article className="lab-lesson" aria-label="本单元教材"><div className="lab-section-title"><Icon name="book"/><h2>{unit.title}</h2></div><p className="lab-outcome">现在能拿它做什么：{unit.outcome}</p>{unit.lesson.map((paragraph, index) => <p key={index}>{paragraph}</p>)}<h3>最小例子</h3><pre><code>{unit.example}</code></pre><div className="lab-example-output"><small>运行后会看到</small><pre>{unit.expected}</pre></div><div className="lab-lesson-notes"><div><h3>常见错误</h3><p>{unit.errors}</p></div><div><h3>在真实工程里的位置</h3><p>{unit.position}</p></div></div></article>
       <section className="lab-work" aria-label="动手任务"><div className="lab-mode" aria-label="任务类型"><button disabled={saving} aria-pressed={mode === 'practice'} className={mode === 'practice' ? 'selected' : ''} onClick={() => {if (mode !== 'practice') {resetView(); setMode('practice');}}}>基础任务</button><button disabled={saving} aria-pressed={mode === 'transfer'} className={mode === 'transfer' ? 'selected' : ''} onClick={() => {if (mode !== 'transfer') {resetView(); setMode('transfer');}}}>隔日变式</button></div>

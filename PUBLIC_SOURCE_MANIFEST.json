@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "policyVersion": 1,
-  "sourceTreeSha256": "b2c6a9522653f8c68f8ebd2570a6500dcb2293543f595caab378e9c343aeb460",
+  "sourceTreeSha256": "51cf75042329ee5d553a37a5a73fae93bf74e40b9a0b8be9f6c08d4610aaf111",
   "files": [
     {
       "path": ".gitignore",
@@ -15,8 +15,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 16371,
-      "sha256": "eb55149613db9a6b9de98ac03c15a394c15f7d11629ce7658985ac6f48fd6f17"
+      "bytes": 16572,
+      "sha256": "660317f5e2b0aa4b3367758d7cccd98dee0b6c9a0b769f374171984754e1614f"
     },
     {
       "path": "THIRD_PARTY_NOTICES.md",
@@ -430,8 +430,8 @@
     },
     {
       "path": "src/browser/app.tsx",
-      "bytes": 24812,
-      "sha256": "8d6b8fc8addee3b1a8244273e269e89ac553404d15d90962cbcaffc4bf322bf5"
+      "bytes": 24840,
+      "sha256": "d1ec5e9e5f08ac213aa1c4b9a0c091dae4a7a1fef6b6d519c982bb3318e90b57"
     },
     {
       "path": "src/browser/controller.ts",
@@ -785,13 +785,13 @@
     },
     {
       "path": "src/renderer/lab-panel.css",
-      "bytes": 8000,
-      "sha256": "5bbc20c75217b6a2746b6af6a591cdeb0e3f5f50238624be2c056fca2247dcbe"
+      "bytes": 8301,
+      "sha256": "a35d3afaad02b6ded082c4489c49dfd7ea2e688837c81cd1a476c7e9ce991535"
     },
     {
       "path": "src/renderer/lab-panel.tsx",
-      "bytes": 19090,
-      "sha256": "40ddfc8bd5efcae0404e2ce0ba4010d25f734a3bdd090e895a5a09580af1ee90"
+      "bytes": 20822,
+      "sha256": "89a420ac60deea43f7d30e7993131c3254690c7da0967e2c614b68a99df0d9a4"
     },
     {
       "path": "src/renderer/lab.worker.ts",
@@ -905,8 +905,8 @@
     },
     {
       "path": "tests/browser-read-aloud.test.tsx",
-      "bytes": 36293,
-      "sha256": "1e715a4ccb5f9ae429e023e9cdd4bb469f94ef5114e2d7b34e23164a93475e66"
+      "bytes": 38257,
+      "sha256": "e70fc544b72cee786b0f7150ae7d3ee44dbfb87b8edd1f8c9ce4830f4fb866c0"
     },
     {
       "path": "tests/browser-repository.test.ts",
@@ -1035,8 +1035,8 @@
     },
     {
       "path": "tests/lab-ui.test.tsx",
-      "bytes": 23786,
-      "sha256": "0753b78dfb6f61bdfe68ad96e0cd6b0ea4e151364baabc4e7f134b88203b470e"
+      "bytes": 33424,
+      "sha256": "b891bc2e6a994034d815add128d78b497392e4cfd1a063fd313b1ab132ac514a"
     },
     {
       "path": "tests/lab.test.ts",
