@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "policyVersion": 1,
-  "sourceTreeSha256": "8abc99c4dbac0c7abf3e16c2c490bc98c65adc184c03f720da138df59c5b2e95",
+  "sourceTreeSha256": "1e610c6b57f9819773d6b442b5e42963d41c14b91bdfdbccb9e5a1ab4a4c23a3",
   "files": [
     {
       "path": ".gitignore",
@@ -145,8 +145,8 @@
     },
     {
       "path": "licenses/NOTICE.md",
-      "bytes": 1257,
-      "sha256": "7d5078a3acd3434e7deb50f4f34ce91e214c83c57434c3cd8e05613f3710ec2a"
+      "bytes": 1364,
+      "sha256": "041232cad6915643489425763125dc564cf88c1a873a783bedeeb5dd7dad0fe4"
     },
     {
       "path": "licenses/SenseVoice-MODEL-LICENSE.txt",
