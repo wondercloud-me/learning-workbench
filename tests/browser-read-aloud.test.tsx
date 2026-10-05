@@ -3,6 +3,7 @@ import React, {act} from 'react';
 import {createRoot, type Root} from 'react-dom/client';
 import {afterEach, expect, it, vi} from 'vitest';
 import {BrowserApp} from '../src/browser/app';
+import {BrowserReadingControls, BrowserReadingProvider, ReadButton, useBrowserReading} from '../src/browser/read-aloud';
 import type {BrowserController} from '../src/browser/controller';
 import {emptyBrowserDocument, type BrowserDocument, type BrowserSnapshot} from '../src/core/browser-state';
 import {createColumn} from '../src/core/learning';
@@ -25,7 +26,7 @@ const now='2026-10-05T00:00:00.000Z';
 function fixture(){const d=emptyBrowserDocument();d.state.onboarding.introSeen=true;d.state.settings.voice.autoRead=true;d.state.columns=[createColumn('第一栏目','理解函数',now,'c'),createColumn('第二栏目','理解参数',now,'other')];d.state.activeColumnId='c';d.state.columns[0].messages=[{id:'main',role:'assistant',origin:'assistant',content:'第一句。\n```js\nconst x = 1;\n```',createdAt:now}];d.state.columns[1].messages=[{id:'other-message',role:'assistant',content:'隐藏栏目内容',createdAt:now}];d.drafts.references['https://example.com/source']={url:'https://example.com/source',text:'  # 字面原文\n```code```  ',providedAt:now};return d;}
 async function mount(initial=fixture()){
  let value=initial;const listeners=new Set<()=>void>();const snapshot=():BrowserSnapshot=>({schemaVersion:1,revision:0,updatedAt:now,document:value});
- const controller={snapshot,pendingDocument:()=>value,subscribe:(fn:()=>void)=>{listeners.add(fn);return()=>listeners.delete(fn);},change:async(fn:(d:BrowserDocument)=>BrowserDocument)=>{value=fn(value);listeners.forEach(fn=>fn());return snapshot();},replace:async(d:BrowserDocument)=>{value=d;listeners.forEach(fn=>fn());return snapshot();},reloadLatest:async()=>snapshot(),recoveries:async()=>[],flush:async()=>{},isBusy:()=>false,hasPending:()=>false,storageStatus:()=> 'saved' as const,close:()=>{},acquireUpdateLock:()=>()=>{},withOperation:async<T,>(_kind:string,fn:()=>Promise<T>)=>fn()} as BrowserController;
+ const controller:BrowserController={snapshot,pendingDocument:()=>value,subscribe:(fn:()=>void)=>{listeners.add(fn);return()=>listeners.delete(fn);},change:async(fn:(d:BrowserDocument)=>BrowserDocument)=>{value=fn(value);listeners.forEach(fn=>fn());return snapshot();},replace:async(d:BrowserDocument)=>{value=d;listeners.forEach(fn=>fn());return snapshot();},reloadLatest:async()=>snapshot(),recoveries:async()=>[],flush:async()=>{},isBusy:()=>false,hasPending:()=>false,storageStatus:()=> 'saved' as const,close:()=>{},acquireUpdateLock:()=>()=>{},documentGeneration:()=>0,messageDraftRevision:()=>0,acquireVoiceOperation:()=>{throw new Error('Voice input is disabled in this legacy UI fixture.');},withOperation:async<T,>(_kind:string,fn:()=>Promise<T>)=>fn()};
  const host=document.createElement('div');document.body.append(host);const root=createRoot(host);mounted.push({root,host});await act(async()=>root.render(<BrowserApp controller={controller}/>));
  const button=(label:string)=>{const b=[...host.querySelectorAll<HTMLButtonElement>('button')].find(b=>b.textContent?.trim()===label);expect(b,`button ${label}`).toBeTruthy();return b!;};
  const click=async(label:string)=>{await act(async()=>button(label).click());};
@@ -35,6 +36,32 @@ async function mount(initial=fixture()){
  return {host,root,controller,button,click,field,choose,publish};
 }
 function direct(node:HTMLElement,name='onClick'){const key=Object.keys(node).find(k=>k.startsWith('__reactProps$'))!;return (node as any)[key][name];}
+async function readingHook(beforeRead?:()=>void,allowed:()=>boolean=()=>true,isCurrent:()=>boolean=()=>true){
+ let reading!:ReturnType<typeof useBrowserReading>;const host=document.createElement('div');document.body.append(host);const root=createRoot(host);mounted.push({root,host});
+ function Harness({before}:{before?:()=>void}){reading=useBrowserReading(allowed,isCurrent,before);return <BrowserReadingProvider value={reading}><BrowserReadingControls/><ReadButton scope="message" itemId="message-a" text="消息原文" label="测试消息朗读" source="消息"/><ReadButton scope="reference" itemId="reference-a" text="资料原文" label="测试资料朗读" source="资料"/></BrowserReadingProvider>;}
+ const render=async(before?:()=>void)=>{await act(async()=>root.render(<Harness before={before}/>));};await render(beforeRead);
+ const click=async(label:string)=>{const button=[...host.querySelectorAll<HTMLButtonElement>('button')].find(item=>item.textContent?.trim()===label)!;expect(button).toBeTruthy();await act(async()=>button.click());};
+ const read=(held=reading)=>{const voice=held.snapshot.voices[0];held.read({scope:'message',itemId:'message-a',text:'用户原文',format:'plain'},held.preferences,{id:voice?.id??null,service:voice?.service??'unknown'});};
+ return {host,render,click,read,current:()=>reading};
+}
+it('runs the latest beforeRead before preview, message and reference speech including a retained read handler',async()=>{
+ const a=audio();const order:string[]=[];const speak=a.synth.speak;a.synth.speak=utterance=>{order.push('speech');speak(utterance);};const ui=await readingHook(()=>order.push('old-before'));
+ await ui.click('试听声音');await ui.click('测试消息朗读');await ui.click('测试资料朗读');expect(order).toEqual(['old-before','speech','old-before','speech','old-before','speech']);expect(a.submissions.map(item=>item.text)).toEqual(['这是手动朗读试听。','消息原文','资料原文']);
+ const retained=ui.current();await ui.render(()=>order.push('latest-before'));await act(async()=>ui.read(retained));expect(order.slice(-2)).toEqual(['latest-before','speech']);
+});
+it('rechecks both scope and request guards after beforeRead synchronously changes them',async()=>{
+ const a=audio();let allowed=true,current=true;const ui=await readingHook(()=>{allowed=false;},()=>allowed,()=>current);await ui.click('测试消息朗读');expect(a.submissions).toHaveLength(0);
+ allowed=true;await ui.render(()=>{current=false;});await ui.click('测试消息朗读');expect(a.submissions).toHaveLength(0);
+});
+it('confirms stopping from the synchronous reader snapshot even while the React snapshot is stale',async()=>{
+ const a=audio();const ui=await readingHook();expect(ui.current().stopAndConfirm).toBeTypeOf('function');
+ await act(async()=>{const held=ui.current();ui.read(held);expect(held.snapshot.active).toBeNull();expect(held.stopAndConfirm()).toBe(true);});
+ await act(async()=>{const held=ui.current();ui.read(held);a.synth.cancel.mockImplementation(()=>{throw Error('injected cancel failure');});expect(held.snapshot.errorCode).toBeNull();expect(held.stopAndConfirm()).toBe(false);});expect(ui.current().snapshot.errorCode).toBe('cancel-failed');
+});
+it('refuses speech when beforeRead fails and retains the failure across voice-list notifications',async()=>{
+ const a=audio();const ui=await readingHook(()=>{throw Error('input cleanup was not confirmed');});await ui.click('测试消息朗读');expect(a.submissions).toHaveLength(0);expect(ui.current().snapshot.errorCode).toBe('before-read-failed');expect(ui.host.textContent).toContain('无法确认语音输入已停止');
+ await act(async()=>a.changed());expect(ui.current().snapshot.errorCode).toBe('before-read-failed');a.synth.cancel.mockImplementation(()=>{throw Error('injected output cancellation failure');});await ui.click('测试消息朗读');expect(ui.current().snapshot.errorCode).toBe('cancel-failed');expect(a.submissions).toHaveLength(0);
+});
 async function teaching(ui:Awaited<ReturnType<typeof mount>>){await ui.click('可选 AI 教学');}
 async function backup(ui:Awaited<ReturnType<typeof mount>>,d=fixture()) {const file=new File(['fixture'],'backup.json');Object.defineProperty(file,'text',{value:async()=>JSON.stringify(createBackup(d,'0.9.0',now))});const input=ui.host.querySelector<HTMLInputElement>('[aria-label="选择备份文件"]')!;Object.defineProperty(input,'files',{configurable:true,value:[file]});await act(async()=>input.dispatchEvent(new Event('change',{bubbles:true})));}
 it('unsupported reading preserves all learning features and imported autoRead never starts audio',async()=>{const ui=await mount();await teaching(ui);expect(ui.host.textContent).toContain('当前浏览器没有可用的朗读接口');expect(ui.button('朗读这条消息').disabled).toBe(true);expect(ui.controller.pendingDocument()).toEqual(fixture());});

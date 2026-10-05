@@ -33,6 +33,18 @@ node scripts/export-public-source.mjs --output .cache/public-source-20261005-01
 
 所选目录中新出现的扩展名、隐藏文件、空格或非 ASCII 文件名需要维护者先审阅并调整清单。图片检查常见文件头；非图片文本不能包含 NUL 字节。单文件上限 8 MiB，整份所选源码上限 64 MiB。二进制依赖和语音权重通过构建脚本下载，不进入源码快照。
 
+## 可选浏览器语音构建边界
+
+`src/browser/voice/resources.json` 是固定来源、许可和字节/hash 元数据，`scripts/prepare-browser-asr.mjs` 是准备源码；它们沿用现有 JSON/脚本规则进入公开快照。生成的运行时、Worker/Worklet 和部署清单写入 `.cache/browser-local-voice/` 与 `dist-browser/optional-asr/1.13.8/<build-id>/`，由已有目录规则排除，不扩大公开白名单或 8 MiB 上限。
+
+普通 `pnpm build:browser` 不运行语音准备，不下载 archive/模型，默认语音入口仍关闭。内部准备必须同时满足明确启用、已完成的对应 shell build、已记录的模型交付 URL，以及实际 Task 3 Worker/AudioWorklet 源码存在。缺少条件会明确失败，不产出可运行占位脚本。
+
+准备流程先以 `WORKBENCH_BROWSER_ASR=1 pnpm build:browser` 构建 shell，再以相同启用标志和 `WORKBENCH_BROWSER_ASR_MODEL_URL` 运行 `pnpm prepare:browser-asr`；模型 URL 仅接受固定 revision 或该 build-id 的精确同源 model 路径。可传 `--archive <已下载的官方包路径>` 复用本地 archive，仍检查 archive 与三件组大小/SHA。未提供本地包时，显式准备才可能下载固定的 4,351,745 字节 runtime archive；此命令不下载模型或 tokens。
+
+准备完成后，以原 build-id 重新生成 SW 的精确可选资源表；整个 `optional-asr/`（包括部署 `resources.json`）始终排除在 shell ASSETS/install 下载之外。可选缓存使用独立 namespace，SW 只返回已匹配清单 digest/ready marker 的同源 Worker/Worklet/trio 精确路径，不读旧 shell 猜资源、不接管模型/API；显式下载用固定 query 经过网络。准备失败或两个命令之间的半份输出不能部署。上述内部构建能力不证明实际手机、浏览器 CORS、麦克风或权重公开再分发已通过。
+
+2026-10-05 的限定实测已验证当前官网 origin 在 Mac Chromium 浏览器中完整读取固定 Hugging Face revision 的模型和词表，七项下载后及再次读取缓存的 bytes/SHA256 均匹配。仅复用官方固定交付链接，保留模型作者、名称、来源与独立模型协议；源码快照仍不包含权重或生成运行时。内部 UI 已接入设置页与教学草稿，下载和录音均由用户明确操作，转写不自动发送或创建学习证据。这个单设备结果不证明自然麦克风、手机、Windows、未来上游可用性或一般再分发许可；默认入口保持关闭。
+
 ## 排除与失败条件
 
 `.git/`、`.cache/`、`node_modules/`、`resources/`、构建/发布目录（含 `dist-browser/`）不进入快照。即使放在所选目录内部，用户数据（含浏览器目录内的 `userData/`）、`personal/`、`private/`、备份、教材缓存、凭据和签名目录仍被排除；常见 `.env`、状态/模型备份 JSON、私钥、证书、数据库和备份文件也被排除。`docs/research/`、`docs/plans/`、`docs/superpowers/`、本机 QA 记录和课堂/个人工作区历史不在清单中。

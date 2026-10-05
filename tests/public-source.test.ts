@@ -55,6 +55,32 @@ async function filesUnder(directory: string, prefix = ''): Promise<string[]> {
 }
 
 describe('fresh public source export', () => {
+  it('exports optional ASR preparation sources while omitting generated runtime, weights and cache', async () => {
+    const selected = ['scripts/prepare-browser-asr.mjs', 'src/browser/voice/resources.json'];
+    const sourceFiles: Record<string, Buffer> = {};
+    for (const relative of selected) sourceFiles[relative] = await readFile(new URL('../' + relative, import.meta.url));
+    const {source, output} = await fixture({
+      ...sourceFiles,
+      'dist-browser/optional-asr/1.13.8/build-a/sherpa-onnx-wasm-web.wasm': Buffer.from([0,97,115,109]),
+      'dist-browser/optional-asr/1.13.8/build-a/model.int8.onnx': Buffer.from([0,1,2]),
+      '.cache/browser-local-voice/prepared/model.int8.onnx': Buffer.from([0,1,2]),
+      '.cache/browser-local-voice/sherpa_onnx_web-1.13.8.tar.gz': Buffer.from([0,1,2]),
+    });
+    const result = run(source, output);
+    expect(result.status, result.stderr).toBe(0);
+    const files = await filesUnder(output);
+    for (const relative of selected) expect(await readFile(path.join(output, relative))).toEqual(sourceFiles[relative]);
+    expect(files.some(file => file.includes('optional-asr/') || file.startsWith('.cache/'))).toBe(false);
+  });
+
+  it('keeps the existing 8 MiB source file limit for optional preparation code', async () => {
+    const {source, output} = await fixture({'scripts/prepare-browser-asr.mjs': Buffer.alloc(8 * 1024 * 1024 + 1, 'x')});
+    const result = run(source, output);
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain('scripts/prepare-browser-asr.mjs');
+    await expect(readdir(output)).rejects.toMatchObject({code:'ENOENT'});
+  });
+
   it('exports the real browser entry, config, manifest and icons without browser build or personal data', async () => {
     const publicBrowserFiles = [
       'vite.browser.config.ts', 'browser/index.html', 'browser/public/manifest.webmanifest',

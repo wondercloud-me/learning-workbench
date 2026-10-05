@@ -1,5 +1,6 @@
 import {validateBrowserDocument, type BrowserDocument, type BrowserSnapshot} from '../core/browser-state';
 import {BrowserStorageError, type BrowserRepository} from './repository';
+import type {BrowserVoiceLease} from './voice/types';
 
 export type BrowserStorageStatus = 'saved' | 'saving' | 'unsaved' | 'conflict' | 'unavailable';
 export interface BrowserController {
@@ -13,6 +14,9 @@ export interface BrowserController {
   reloadLatest(): Promise<BrowserSnapshot>;
   withOperation<T>(kind: 'lab' | 'model', operation: () => Promise<T>): Promise<T>;
   acquireUpdateLock(): () => void;
+  documentGeneration(): number;
+  messageDraftRevision(key: string): number;
+  acquireVoiceOperation(): BrowserVoiceLease;
   isBusy(): boolean;
   hasPending(): boolean;
   storageStatus(): BrowserStorageStatus;
@@ -39,8 +43,11 @@ export async function createBrowserController(repository: BrowserRepository): Pr
   let pending = copy(saved.document);
   let generation = 0;
   let savedGeneration = 0;
+  let documentGeneration = 0;
+  const draftRevisions = new Map<string, number>();
   let queued = 0;
   let operations = 0;
+  let voiceLease: BrowserVoiceLease | undefined;
   let exclusive = false;
   let updateLocked = false;
   let closed = false;
@@ -60,16 +67,24 @@ export async function createBrowserController(repository: BrowserRepository): Pr
     if (queued > 0 || exclusive) return 'saving';
     return hasPending() ? 'unsaved' : 'saved';
   };
+  const acceptPending = (document: BrowserDocument) => {
+    const previous = pending.drafts.messages;
+    const next = document.drafts.messages;
+    for (const key of new Set([...Object.keys(previous), ...Object.keys(next)])) {
+      if (previous[key] !== next[key]) draftRevisions.set(key, (draftRevisions.get(key) ?? 0) + 1);
+    }
+    pending = copy(document);
+  };
   handleRevision = revision => {
     if (closed || (revision >= 0 && revision <= saved.revision)) return;
-    if (revision < 0) {emit(); return;}
+    if (revision < 0) {documentGeneration++; emit(); return;}
     if (invalidation) return;
     if (hasPending() || queued || exclusive || updateLocked || operations) {lastError = conflict(); emit(); return;}
     const observedGeneration = generation;
     void repository.load().then(next => {
       if (closed || next.revision <= saved.revision) return;
       if (generation !== observedGeneration || hasPending() || isBusy()) {lastError = conflict(); emit(); return;}
-      saved = copy(next); pending = copy(next.document); lastError = undefined; emit();
+      documentGeneration++; saved = copy(next); acceptPending(next.document); lastError = undefined; emit();
     }).catch(cause => {if (!closed) {lastError = asStorageError(cause); emit();}});
   };
   const flush = async () => {
@@ -90,7 +105,7 @@ export async function createBrowserController(repository: BrowserRepository): Pr
       if (exclusive || updateLocked) throw blocked();
       try {candidate = validateBrowserDocument(mutator(copy(pending)));} catch (cause) {throw new BrowserStorageError('invalid', cause instanceof Error ? cause.message : '学习文档格式不正确。');}
     } catch (cause) {return Promise.reject(cause);}
-    pending = copy(candidate);
+    acceptPending(candidate);
     const version = ++generation;
     const paused = invalidation ?? (lastError?.code === 'revision-conflict' ? lastError : undefined);
     if (paused) {emit(); return Promise.reject(paused);}
@@ -100,7 +115,7 @@ export async function createBrowserController(repository: BrowserRepository): Pr
       if (lastError?.code === 'revision-conflict') throw lastError;
       const next = await repository.commit(candidate, saved.revision);
       saved = copy(next); savedGeneration = version;
-      if (generation === version) pending = copy(next.document);
+      if (generation === version) acceptPending(next.document);
       lastError = undefined;
       return copy(next);
     }).catch(cause => {lastError = asStorageError(cause); throw lastError;}).finally(() => {queued--; emit();});
@@ -112,32 +127,51 @@ export async function createBrowserController(repository: BrowserRepository): Pr
   };
   const reloadLatest = async () => {
     ensureAction(); if (queued || operations) throw blocked();
-    exclusive = true; emit();
-    try {const next = await repository.load(); saved = copy(next); pending = copy(next.document); savedGeneration = ++generation; lastError = undefined; return copy(next);}
+    exclusive = true; documentGeneration++; emit();
+    try {const next = await repository.load(); saved = copy(next); acceptPending(next.document); savedGeneration = ++generation; lastError = undefined; return copy(next);}
     catch (cause) {lastError = asStorageError(cause); throw lastError;}
     finally {exclusive = false; emit();}
   };
   return {
     snapshot: () => copy(saved), pendingDocument: () => copy(pending), subscribe: listener => {if (closed) return () => {}; listeners.add(listener); return () => {listeners.delete(listener);};},
     change, flush, isBusy, hasPending, storageStatus, reloadLatest,
+    documentGeneration: () => documentGeneration,
+    messageDraftRevision: key => draftRevisions.get(key) ?? 0,
+    acquireVoiceOperation: () => {
+      ensureExclusive();
+      if (lastError || storageStatus() !== 'saved') throw lastError ?? blocked();
+      const observedDocument = documentGeneration;
+      let released = false;
+      const lease: BrowserVoiceLease = {
+        documentGeneration: observedDocument,
+        current: () => !released && voiceLease === lease && !closed && !invalidation && !exclusive && !updateLocked
+          && documentGeneration === observedDocument && lastError?.code !== 'revision-conflict' && lastError?.code !== 'unavailable',
+        release: () => {
+          if (released) return;
+          released = true; voiceLease = undefined; operations--; emit();
+        },
+      };
+      voiceLease = lease; operations++; emit();
+      return lease;
+    },
     recoveries: () => {ensureOpen(); return repository.recoveries();},
     replace: async input => {
       ensureExclusive(); if (lastError?.code === 'revision-conflict') throw lastError;
       let document: BrowserDocument;
       try {document = validateBrowserDocument(input);} catch (cause) {throw new BrowserStorageError('invalid', cause instanceof Error ? cause.message : '学习文档格式不正确。');}
-      exclusive = true; emit();
+      exclusive = true; documentGeneration++; emit();
       try {
         const next = await repository.replace(document, saved.revision);
-        saved = copy(next); pending = copy(next.document); savedGeneration = ++generation; lastError = undefined; return copy(next);
+        saved = copy(next); acceptPending(next.document); savedGeneration = ++generation; lastError = undefined; return copy(next);
       } catch (cause) {lastError = asStorageError(cause); throw lastError;}
       finally {exclusive = false; emit();}
     },
-    withOperation: async (_kind, operation) => {ensureAction(); operations++; emit(); try {return await operation();} finally {operations--; emit();}},
+    withOperation: async (_kind, operation) => {ensureAction(); if (voiceLease) throw blocked(); operations++; emit(); try {return await operation();} finally {operations--; emit();}},
     acquireUpdateLock: () => {
       ensureExclusive(); if (lastError || storageStatus() !== 'saved') throw lastError ?? blocked();
-      updateLocked = true; emit(); let released = false;
+      updateLocked = true; documentGeneration++; emit(); let released = false;
       return () => {if (released) return; released = true; updateLocked = false; emit();};
     },
-    close: () => {if (closed) return; closed = true; unsubscribe(); listeners.clear(); repository.close();}
+    close: () => {if (closed) return; closed = true; documentGeneration++; unsubscribe(); listeners.clear(); repository.close();}
   };
 }

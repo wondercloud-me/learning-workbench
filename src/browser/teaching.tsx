@@ -9,6 +9,8 @@ import {resolveModel} from '../core/model-library';
 import {endpoint} from '../core/providers';
 import {Icon} from '../renderer/icon';
 import {ReadButton} from './read-aloud';
+import {BrowserVoiceInput} from './voice/input';
+import type {BrowserVoiceCoordinator} from './voice/coordinator';
 
 export const teachingDraftKey = (kind: 'question'|'material'|'ai'|'answer'|'teachback'|'help', columnId: string) => `${kind}:${columnId}`;
 export function stageTeachingMaterial(document: BrowserDocument, columnId: string, text: string, kind: 'material'|'ai'): BrowserDocument {
@@ -28,7 +30,7 @@ const history = (messages: Message[]) => messages.map(message => ({id:message.id
 type Accepted = {input: ChatInput; key?:string; text?:string; user?:Message; assistant:Message; compact:boolean; dispatched:boolean; reply?:string};
 
 /** Only explicit learner actions call evidence rules. Questions and materials have separate durable drafts. */
-export function MobileTeaching({columnId,controller,models,suspended=false,onDirty=()=>{},readingVisible=false,onReadingScopeChange=()=>{}}:{columnId:string;controller:BrowserController;models:ModelSession;suspended?:boolean;onDirty?:(dirty:boolean)=>void;readingVisible?:boolean;onReadingScopeChange?:()=>void}) {
+export function MobileTeaching({columnId,controller,models,voice,suspended=false,onDirty=()=>{},readingVisible=false,onReadingScopeChange=()=>{}}:{columnId:string;controller:BrowserController;models:ModelSession;voice?:BrowserVoiceCoordinator;suspended?:boolean;onDirty?:(dirty:boolean)=>void;readingVisible?:boolean;onReadingScopeChange?:()=>void}) {
   const [,render]=useState(0);const [mode,setMode]=useState<'question'|'material'|'ai'|'learner'>('question');
   const [error,setError]=useState('');const [notice,setNotice]=useState('');const [sideId,setSideId]=useState('');
   const [selection,setSelection]=useState<{message:Message;quote:string}|null>(null);
@@ -37,7 +39,9 @@ export function MobileTeaching({columnId,controller,models,suspended=false,onDir
   const [block,setBlock]=useState('');const [outcome,setOutcome]=useState('');
   const locks=useRef(new Set<string>());const aborts=useRef(new Map<string,AbortController>());const recovery=useRef(new Map<string,Accepted>());
   const readingScope = useRef({visible:readingVisible,sideId}); readingScope.current={visible:readingVisible,sideId};
-  function switchSide(next: string) {if(held.current)return;onReadingScopeChange();readingScope.current.sideId=next;setSideId(next);}
+  function cancelScope() {voice?.scope();onReadingScopeChange();}
+  function switchSide(next: string) {if(held.current)return;cancelScope();readingScope.current.sideId=next;setSideId(next);}
+  function switchMode(next: typeof mode) {if(held.current)return;cancelScope();setMode(next);}
   const composing=useRef(false);const held=useRef(suspended);held.current=suspended;
   useEffect(()=>controller.subscribe(()=>render(value=>value+1)),[controller]);
   useEffect(()=>()=>{aborts.current.forEach(abort=>abort.abort());onDirty(false);},[controller]);
@@ -55,7 +59,7 @@ export function MobileTeaching({columnId,controller,models,suspended=false,onDir
   try {const resolved=resolveModel(document.state.settings.modelLibrary);destination=`${resolved.profile.name} / ${resolved.settings.model} → ${endpoint(resolved.settings).url}`;}catch{}
   async function mutate(transform:(latest:BrowserDocument)=>BrowserDocument){if(held.current)return;try{await controller.change(transform);setError('');}catch(cause){setError(errorText(cause));}}
   function updateColumn(latest:BrowserDocument,transform:(c:LearningColumn)=>LearningColumn){const found=latest.state.columns.find(c=>c.id===columnId);if(!found)throw Error('原教学栏目已不存在。');return {...latest,state:{...latest.state,columns:latest.state.columns.map(c=>c.id===columnId?transform(c):c)}};}
-  function transition(transform:(c:LearningColumn)=>LearningColumn){if(held.current||locks.current.size)return;void mutate(latest=>updateColumn(latest,transform));}
+  function transition(transform:(c:LearningColumn)=>LearningColumn){if(held.current||locks.current.size)return;cancelScope();void mutate(latest=>updateColumn(latest,transform));}
   function edit(value:string){if(held.current)return;if(value.length>20000){setError('草稿超过 20,000 字，已保留原有输入。');return;}void mutate(latest=>({...latest,drafts:{...latest.drafts,messages:{...latest.drafts.messages,[key]:value}}}));}
   function append(latest:BrowserDocument,message:Message,targetScope:string){
     if(targetScope.startsWith('side:')){const found=latest.state.sideChats.find(s=>`side:${s.id}`===targetScope&&s.columnId===columnId);if(!found)throw Error('原侧聊已不存在。');return {...latest,state:{...latest.state,sideChats:latest.state.sideChats.map(s=>s.id===found.id?{...s,messages:s.messages.some(m=>m.id===message.id)?s.messages:[...s.messages,message]}:s)}};}
@@ -82,6 +86,7 @@ export function MobileTeaching({columnId,controller,models,suspended=false,onDir
   }
   function send(compact=false){
     if (held.current || composing.current || locks.current.has(scope)) return;
+    cancelScope();
     if (recovery.current.has(scope)) {
       setError('此对话还有待保存的付费回复，请先仅重试保存；可以继续编辑草稿。');
       return;
@@ -99,6 +104,7 @@ export function MobileTeaching({columnId,controller,models,suspended=false,onDir
   }
   function saveLearner() {
     if (held.current || composing.current || locks.current.size) return;
+    cancelScope();
     const expectedPhase = column!.phase;
     const expectedStep = step?.id;
     const raw = text;
@@ -129,6 +135,7 @@ export function MobileTeaching({columnId,controller,models,suspended=false,onDir
   }
   async function makeSide() {
     if (held.current || !selection || selectionSaving.current) return;
+    cancelScope();
     const selected = selection;
     const submittedRevision = selectionRevision.current;
     selectionSaving.current = true;
@@ -151,19 +158,20 @@ export function MobileTeaching({columnId,controller,models,suspended=false,onDir
       render(value => value + 1);
     }
   }
-  function carry(){if(held.current||!side)return;const reply=[...side.messages].reverse().find(m=>m.role==='assistant');if(!reply){setError('尚无侧聊回复可以带回。');return;}void mutate(latest=>stageTeachingMaterial(latest,side.columnId,carrySideChatConclusion(side,reply.content),'ai'));}
+  function carry(){if(held.current||!side)return;cancelScope();const reply=[...side.messages].reverse().find(m=>m.role==='assistant');if(!reply){setError('尚无侧聊回复可以带回。');return;}void mutate(latest=>stageTeachingMaterial(latest,side.columnId,carrySideChatConclusion(side,reply.content),'ai'));}
   return <section className="browser-page browser-teaching" aria-label="可选 AI 教学">
     <h1>{column.title}</h1><p>{column.goal}</p>{column.source&&<p>导入的课程绑定仅作为记录：<a href={column.source.url} target="_blank" rel="noopener noreferrer" aria-disabled={suspended||undefined} tabIndex={suspended?-1:undefined} onClick={event=>{if(held.current)event.preventDefault();}}>打开原站资料 ↗</a> · 记录版本 {column.source.version}；未重新取得当前正文。</p>}
     <p>当前知识块：{step?.title??'请手动确认'} · {column.phase}。阅读和 AI 回复不表示掌握。</p>
-    {column.phase==='planning'&&<div className="browser-card"><label>本次知识块<input aria-label="本次知识块" value={block} onChange={e=>{if(held.current)return;setBlock(e.target.value);onDirty(true);}}/></label><label>学完能做什么<input aria-label="学完能做什么" value={outcome} onChange={e=>{if(held.current)return;setOutcome(e.target.value);onDirty(true);}}/></label><button onClick={()=>{if(held.current)return;const stepId=id();void mutate(latest=>updateColumn(latest,c=>confirmPlan(c,{target:c.goal,steps:[{id:stepId,title:block,outcome,priority:1}]}))).then(()=>{if(controller.storageStatus()==='saved'){setBlock('');setOutcome('');onDirty(false);}});}}>确认本次知识块</button><button onClick={()=>{if(held.current)return;setBlock('');setOutcome('');onDirty(false);}}>取消知识块编辑</button></div>}
+    {column.phase==='planning'&&<div className="browser-card"><label>本次知识块<input aria-label="本次知识块" value={block} onChange={e=>{if(held.current)return;setBlock(e.target.value);onDirty(true);}}/></label><label>学完能做什么<input aria-label="学完能做什么" value={outcome} onChange={e=>{if(held.current)return;setOutcome(e.target.value);onDirty(true);}}/></label><button onClick={()=>{if(held.current)return;cancelScope();const stepId=id();void mutate(latest=>updateColumn(latest,c=>confirmPlan(c,{target:c.goal,steps:[{id:stepId,title:block,outcome,priority:1}]}))).then(()=>{if(controller.storageStatus()==='saved'){setBlock('');setOutcome('');onDirty(false);}});}}>确认本次知识块</button><button onClick={()=>{if(held.current)return;setBlock('');setOutcome('');onDirty(false);}}>取消知识块编辑</button></div>}
     <div className="browser-actions">{column.phase==='overview'&&<button onClick={()=>transition(beginStudy)}>开始学习这块</button>}{column.phase==='study'&&<><button onClick={()=>transition(markTaught)}>这块已学过</button><button onClick={()=>transition(beginVerification)}>进入学后验证</button></>}{column.phase==='remediate'&&<button onClick={()=>transition(completeStep)}>完成当前知识块</button>}</div>
     <div className="browser-actions"><button aria-pressed={!side} onClick={()=>{switchSide('');}}>主教学</button>{sides.map(item=><button key={item.id} onClick={()=>{switchSide(item.id);}} aria-pressed={side?.id===item.id}>侧聊：{item.context.quote}</button>)}</div>
     {side&&<div className="browser-card"><h2>仅讨论选定片段</h2><blockquote>{side.context.quote}</blockquote><p>原栏目：{column.title}</p><button onClick={carry}>带回原栏目草稿</button></div>}
     <details className="browser-card" open><summary>{side?'侧聊原始记录':'教学原始记录'}</summary>{(side?side.messages:column.messages).map(item=><article className="browser-record-message" key={item.id}><strong>{item.origin==='assistant'&&item.role==='user'?'AI 来源材料（待讨论）':item.role==='assistant'?'AI 讲解 / 补充例子':'用户原文（是否证据取决于明确保存动作）'}</strong><pre>{item.content}</pre><ReadButton scope={`teaching:${columnId}`} itemId={item.id} text={item.content} label="朗读这条消息" source={item.role==='assistant'||item.origin==='assistant'?'AI 来源内容':'用户原文'} eligible={()=>!held.current&&readingScope.current.visible&&readingScope.current.sideId===(side?.id??'')}/>{item.model&&<small>{item.apiProfile} / {item.model}</small>}{!side&&<button onClick={()=>openSelection(item)}>围绕这段开侧聊</button>}</article>)}</details>
     {selection&&<div className="browser-card"><p>仅从上面这条本地记录选取文字。创建不会发送请求。</p><textarea aria-label="侧聊选取文字" value={selection.quote} onChange={e=>{if(held.current)return;if(e.target.value.length>20000){setError('选区超过 20,000 字。');return;}selectionRevision.current++;setSelection({...selection,quote:e.target.value});onDirty(true);}}/><button disabled={selectionSaving.current} onClick={()=>void makeSide()}>确认创建侧聊</button><button onClick={()=>{if(held.current)return;selectionRevision.current++;setSelection(null);onDirty(false);}}>取消选区</button></div>}
-    {!side&&<div className="browser-actions"><button onClick={()=>{if(!held.current)setMode('question');}}>普通提问</button><button onClick={()=>{if(!held.current)setMode('material');}}>材料提问</button><button onClick={()=>{if(!held.current)setMode('ai');}}>AI 结论提问</button>{['verify','teachback'].includes(column.phase)&&<button onClick={()=>{if(!held.current)setMode('learner');}}>自己的回答</button>}</div>}
+    {!side&&<div className="browser-actions"><button onClick={()=>{switchMode('question');}}>普通提问</button><button onClick={()=>{switchMode('material');}}>材料提问</button><button onClick={()=>{switchMode('ai');}}>AI 结论提问</button>{['verify','teachback'].includes(column.phase)&&<button onClick={()=>{switchMode('learner');}}>自己的回答</button>}</div>}
     <p className="browser-model-destination">显式发送目的地：{destination}。Key 仅用于本次网页；没有 Key 仍可本地学习、保存回答。</p>
     <label>{side?'侧聊问题':mode==='learner'?'请写自己的产出':mode==='material'?'你提供的材料，未核验原文版本':mode==='ai'?'AI 来源结论，仅供提问':'可选 AI 帮助'}<textarea aria-label={side?'侧聊问题':mode==='learner'?(column.phase==='teachback'?'我的复述':'我的学后回答'):mode==='material'?'材料提问草稿':mode==='ai'?'AI 结论草稿':'向 AI 提问'} rows={6} value={text} autoCapitalize="off" autoCorrect="off" spellCheck={false} onChange={e=>edit(e.target.value)} onCompositionStart={()=>{composing.current=true;}} onCompositionEnd={()=>{composing.current=false;}} onKeyDown={event=>{if(event.nativeEvent.isComposing||composing.current)return;if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();if(mode==='learner'&&!side)saveLearner();else send();}}}/></label>
+    {voice&&<BrowserVoiceInput voice={voice} target={{page:'learn',learningView:'teaching',columnId,sideId:side?.id??null,mode,key,phase:column.phase,stepId:step?.id??null,documentGeneration:controller.documentGeneration()}} composing={()=>composing.current} eligible={()=>!held.current&&readingScope.current.visible&&readingScope.current.sideId===(side?.id??'')&&!locks.current.size}/> }
     {mode==='learner'&&!side&&['verify','teachback'].includes(column.phase)?<><label>使用帮助程度<select aria-label="使用帮助程度" value={help} onChange={e=>{if(held.current)return;const requested=e.target.value as HelpLevel;void mutate(latest=>({...latest,drafts:{...latest.drafts,messages:{...latest.drafts.messages,[helpKey]:ranks[Math.max(ranks.indexOf(help),ranks.indexOf(requested))]}}}));}}>{ranks.map(level=><option key={level} value={level}>{({independent:'独立尝试',hinted:'看过提示',explained:'看过讲解'})[level]}</option>)}</select></label><button disabled={busy} onClick={saveLearner}>{column.phase==='teachback'?'保存自己的复述':'保存自己的回答'}</button></>:<div className="browser-actions"><button disabled={busy||recovery.current.has(scope)||column.phase==='planning'} onClick={()=>send()}><Icon name="send"/>{side?'发送侧聊问题':mode==='material'?'发送材料提问':mode==='ai'?'发送 AI 结论提问':'发送问题'}</button><button disabled={busy||recovery.current.has(scope)} onClick={()=>send(true)}>整理当前上下文</button></div>}
     {busy&&<button onClick={()=>aborts.current.get(scope)?.abort()}>取消请求</button>}{recovery.current.has(scope)&&<><p>此对话还有尚未保存的付费回复。先仅重试保存，再发起新请求；草稿可继续编辑。</p><button disabled={busy} onClick={()=>void run(recovery.current.get(scope)!,true)}>仅重试保存</button></>}
     {error&&<p role="alert" className="browser-error">{error}</p>}{notice&&<p role="status">{notice}</p>}

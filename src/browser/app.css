@@ -17,3 +17,6 @@
 
 .browser-reading{padding-top:16px;padding-bottom:16px;border-bottom:1px solid var(--line)}.browser-reading h2{font-size:16px}.browser-reading-fields{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr);gap:12px}.browser-reading-fields label{min-width:0;margin:4px 0}.browser-reading-choice{overflow-wrap:anywhere}.browser-reading .browser-actions{margin:10px 0}.browser-read-button{margin:10px 0}.browser-read-button p{margin:8px 0}.browser-reading button,.browser-read-button button{min-height:44px;min-width:44px}.browser-reading select{font-size:16px;max-width:100%}@media(max-width:640px){.browser-reading-fields{grid-template-columns:minmax(0,1fr)}.browser-reading .browser-actions>button{flex:1 1 140px}}
 @media(max-width:520px){.browser-app .model-settings .api-templates button{flex-basis:100%}.browser-app .model-settings .api-templates strong{overflow-wrap:normal;word-break:normal}}
+.browser-voice-input {margin: 1rem 0; padding: .85rem; border: 1px solid var(--line); border-radius: 12px;}
+.browser-voice-input button {margin: .25rem .5rem .25rem 0;}
+.browser-voice-preview pre {white-space: pre-wrap; overflow-wrap: anywhere; max-height: 18rem; overflow: auto;}

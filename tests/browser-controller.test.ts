@@ -189,3 +189,75 @@ it('does not stage edits while explicitly closed or under exclusive and update b
  const reload=c.reloadLatest();await expect(c.change(message('blocked reload'))).rejects.toMatchObject({code:'unavailable'});await reload;expect(c.hasPending()).toBe(false);expect(c.pendingDocument().drafts.messages.main).toBeUndefined();
  c.close();await expect(c.change(message('blocked close'))).rejects.toMatchObject({code:'unavailable'});expect(c.hasPending()).toBe(false);expect(c.pendingDocument().drafts.messages.main).toBeUndefined();
 });
+
+it('holds a synchronous voice lease against replace, update and new operations', async () => {
+ const {c}=await setup(); const lease=c.acquireVoiceOperation();
+ expect(lease.documentGeneration).toBe(0); expect(lease.current()).toBe(true); expect(c.isBusy()).toBe(true);
+ expect(()=>c.acquireVoiceOperation()).toThrow(); expect(()=>c.acquireUpdateLock()).toThrow();
+ await expect(c.replace(c.pendingDocument())).rejects.toMatchObject({code:'unavailable'});
+ await expect(c.reloadLatest()).rejects.toMatchObject({code:'unavailable'});
+ const dispatched:string[]=[];
+ await expect(c.withOperation('model',async()=>{dispatched.push('model');})).rejects.toMatchObject({code:'unavailable'});
+ await expect(c.withOperation('lab',async()=>{dispatched.push('lab');})).rejects.toMatchObject({code:'unavailable'});
+ expect(dispatched).toEqual([]);
+ lease.release(); lease.release(); expect(lease.current()).toBe(false); expect(c.isBusy()).toBe(false);
+ const gate=deferred();
+ const lab=c.withOperation('lab',async()=>{dispatched.push('lab');await gate.promise;});
+ const model=c.withOperation('model',async()=>{dispatched.push('model');await gate.promise;});
+ expect(dispatched).toEqual(['lab','model']); expect(()=>c.acquireVoiceOperation()).toThrow();
+ gate.resolve(); await Promise.all([lab,model]); expect(c.isBusy()).toBe(false);
+});
+it('keeps a voice lease current through ordinary optimistic typing and saves', async () => {
+ const gate=deferred();const {c}=await setup(undefined,r=>({...r,commit:async(d,rev)=>{await gate.promise;return r.commit(d,rev);}}));
+ const lease=c.acquireVoiceOperation();const save=c.change(message('typing during voice'));
+ expect(c.pendingDocument().drafts.messages.main).toBe('typing during voice'); expect(c.storageStatus()).toBe('saving');
+ expect(lease.current()).toBe(true); expect(c.documentGeneration()).toBe(0);
+ lease.release(); lease.release(); expect(c.isBusy()).toBe(true); expect(()=>c.acquireVoiceOperation()).toThrow();
+ gate.resolve();await save;const next=c.acquireVoiceOperation();expect(next.current()).toBe(true);next.release();expect(c.isBusy()).toBe(false);
+});
+it('refuses voice acquisition with unsaved, exclusive, update or closed storage', async () => {
+ let fail=true;const {c}=await setup(undefined,r=>({...r,commit:async(d,rev)=>{if(fail)throw new BrowserStorageError('quota','full');return r.commit(d,rev);}}));
+ await expect(c.change(message('retain pending'))).rejects.toMatchObject({code:'quota'});
+ expect(()=>c.acquireVoiceOperation()).toThrow(); expect(c.pendingDocument().drafts.messages.main).toBe('retain pending');
+ fail=false;await c.change(d=>d);const lease=c.acquireVoiceOperation();expect(lease.current()).toBe(true);lease.release();
+ const update=c.acquireUpdateLock();expect(()=>c.acquireVoiceOperation()).toThrow();update();
+ const reload=c.reloadLatest();expect(()=>c.acquireVoiceOperation()).toThrow();await reload;
+ c.close();expect(()=>c.acquireVoiceOperation()).toThrow();
+});
+it('separates per-key draft revisions from the document lifecycle', async () => {
+ const {c}=await setup();expect(c.documentGeneration()).toBe(0);expect(c.messageDraftRevision('main')).toBe(0);
+ const one=c.change(message('original'));expect(c.messageDraftRevision('main')).toBe(1);await one;
+ await c.change(d=>({...d,drafts:{...d.drafts,messages:{...d.drafts.messages,other:'other text'}}}));
+ expect(c.messageDraftRevision('main')).toBe(1);expect(c.messageDraftRevision('other')).toBe(1);
+ await c.change(message('edited'));await c.change(message('original'));expect(c.messageDraftRevision('main')).toBe(3);
+ await c.change(d=>{delete d.drafts.messages.main;return d;});expect(c.messageDraftRevision('main')).toBe(4);
+ await c.change(d=>d);await expect(c.change(message('x'.repeat(20001)))).rejects.toMatchObject({code:'invalid'});
+ expect(c.messageDraftRevision('main')).toBe(4);expect(c.documentGeneration()).toBe(0);
+ const reload=c.reloadLatest();expect(c.documentGeneration()).toBe(1);await reload;
+ const replace=c.replace(c.pendingDocument());expect(c.documentGeneration()).toBe(2);await replace;
+ const release=c.acquireUpdateLock();expect(c.documentGeneration()).toBe(3);release();release();expect(c.documentGeneration()).toBe(3);
+ c.close();c.close();expect(c.documentGeneration()).toBe(4);
+});
+it('advances the lifecycle on accepted external replacement and on failed exclusive attempts', async () => {
+ const factory=new IDBFactory();const {c}=await setup(factory);const other=await openBrowserRepository(factory);repos.push(other);
+ await other.commit(message('external')((await other.load()).document),0);
+ await vi.waitFor(()=>expect(c.pendingDocument().drafts.messages.main).toBe('external'));
+ expect(c.documentGeneration()).toBe(1);expect(c.messageDraftRevision('main')).toBe(1);
+ let failRead=false;const {c:broken}=await setup(undefined,r=>({...r,load:async()=>{if(failRead)throw new BrowserStorageError('unavailable','read failed');return r.load();}}));
+ failRead=true;const reload=broken.reloadLatest();expect(broken.documentGeneration()).toBe(1);
+ await expect(reload).rejects.toMatchObject({code:'unavailable'});expect(()=>broken.acquireVoiceOperation()).toThrow();
+ const {c:quota}=await setup(undefined,r=>({...r,replace:async()=>{throw new BrowserStorageError('quota','recovery full');}}));
+ const replace=quota.replace(quota.pendingDocument());expect(quota.documentGeneration()).toBe(1);
+ await expect(replace).rejects.toMatchObject({code:'quota'});expect(quota.documentGeneration()).toBe(1);
+});
+it('makes voice leases stale on real revision conflicts and repository invalidation', async () => {
+ const factory=new IDBFactory();const {c}=await setup(factory);const lease=c.acquireVoiceOperation();
+ const other=await openBrowserRepository(factory);repos.push(other);
+ await other.commit(message('remote')((await other.load()).document),0);
+ expect(c.storageStatus()).toBe('conflict');expect(lease.current()).toBe(false);
+ lease.release();await c.reloadLatest();expect(c.documentGeneration()).toBe(1);
+ const current=c.acquireVoiceOperation();const upgrade=factory.open('growth-workbench',2);
+ const db=await new Promise<IDBDatabase>((resolve,reject)=>{upgrade.onsuccess=()=>resolve(upgrade.result);upgrade.onerror=()=>reject(upgrade.error);});
+ expect(c.storageStatus()).toBe('unavailable');expect(c.documentGeneration()).toBe(2);expect(current.current()).toBe(false);
+ current.release();expect(()=>c.acquireVoiceOperation()).toThrow();db.close();
+});

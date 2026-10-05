@@ -19,6 +19,7 @@
     "build:main": "node scripts/build-main.mjs",
     "build": "pnpm build:main && vite build",
     "build:browser": "vite build --config vite.browser.config.ts && node scripts/build-browser-sw.mjs",
+    "prepare:browser-asr": "node scripts/prepare-browser-asr.mjs",
     "preview:browser": "vite preview --config vite.browser.config.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",

@@ -10,12 +10,14 @@ const ReadingContext = createContext<Reading | null>(null);
 export const BrowserReadingProvider = ReadingContext.Provider;
 
 /** The App owns one output service; session choices never enter its document. */
-export function useBrowserReading(allowed: (scope?: string) => boolean, isCurrent: (request: ReadingInput) => boolean = () => true) {
+export function useBrowserReading(allowed: (scope?: string) => boolean, isCurrent: (request: ReadingInput) => boolean = () => true, beforeRead?: () => void) {
   const [reader] = useState(() => createBrowserReader());
   const [snapshot, setSnapshot] = useState<BrowserSpeechSnapshot>(() => reader.snapshot());
   const [preferences, setPreferences] = useState(defaults);
+  const [beforeReadFailed, setBeforeReadFailed] = useState(false);
   const guard = useRef(allowed); guard.current = allowed;
   const currentGuard = useRef(isCurrent); currentGuard.current = isCurrent;
+  const beforeReadGuard = useRef(beforeRead); beforeReadGuard.current = beforeRead;
   const request = useRef<ReadingInput | null>(null);
   const live = useRef(true);
   useEffect(() => {
@@ -25,11 +27,18 @@ export function useBrowserReading(allowed: (scope?: string) => boolean, isCurren
     return () => {live.current = false; request.current = null; unsubscribe(); reader.dispose();};
   }, [reader]);
   const permitted = (scope?: string) => live.current && guard.current(scope);
-  const stop = (reason: Parameters<typeof reader.stop>[0] = 'user') => {request.current = null; reader.stop(reason);};
+  const stop = (reason: Parameters<typeof reader.stop>[0] = 'user') => {request.current = null; if (live.current) setBeforeReadFailed(false); reader.stop(reason);};
   return {
-    snapshot, preferences,
+    snapshot: beforeReadFailed && snapshot.errorCode !== 'cancel-failed'
+      ? {...snapshot, phase:'error' as const, active:null, errorCode:'before-read-failed', notice:'无法确认语音输入已停止，暂未开始朗读。请停止语音输入后重试。'}
+      : snapshot,
+    preferences,
     read(input: ReadingInput, displayed: BrowserSpeechPreferences, expectedVoice: BrowserReadRequest['expectedVoice']) {
       if (permitted(input.scope) && currentGuard.current(input)) {
+        try {beforeReadGuard.current?.();}
+        catch {stop('scope'); if (live.current) setBeforeReadFailed(true); return;}
+        if (!permitted(input.scope) || !currentGuard.current(input)) return;
+        setBeforeReadFailed(false);
         request.current = {...input};
         reader.read({...input, preferences: displayed, expectedVoice});
       }
@@ -37,6 +46,12 @@ export function useBrowserReading(allowed: (scope?: string) => boolean, isCurren
     change(next: BrowserSpeechPreferences) {if (permitted()) {stop('scope'); setPreferences(next);}},
     refresh() {if (permitted()) reader.refreshVoices();},
     stop,
+    stopAndConfirm() {
+      if (!live.current) return false;
+      stop('scope');
+      const latest = reader.snapshot();
+      return live.current && !latest.active && latest.errorCode !== 'cancel-failed';
+    },
     invalidate() {
       const active = request.current;
       if (reader.snapshot().active && active && (!permitted(active.scope) || !currentGuard.current(active))) stop('scope');

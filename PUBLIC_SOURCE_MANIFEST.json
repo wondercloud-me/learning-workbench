@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "policyVersion": 1,
-  "sourceTreeSha256": "677ed420476e01c5214a7c5ed93281ee8f2db53d77f18cd9178f4ece0a18ed17",
+  "sourceTreeSha256": "5a93322f5cb3abc9e05a21a9f9d4d49e174effb7b99a5b66767b67587d1a21b4",
   "files": [
     {
       "path": ".gitignore",
@@ -15,13 +15,13 @@
     },
     {
       "path": "README.md",
-      "bytes": 15734,
-      "sha256": "edc1863bff0e75ac7def17772d87966ee5bb9c81cba2a07d840cff493d28a6e8"
+      "bytes": 16371,
+      "sha256": "eb55149613db9a6b9de98ac03c15a394c15f7d11629ce7658985ac6f48fd6f17"
     },
     {
       "path": "THIRD_PARTY_NOTICES.md",
-      "bytes": 8774,
-      "sha256": "bfe1a73ba7dd6b5b6da1b2fa3dd1b87438b31e3003eb57a23b4119e9d9a25474"
+      "bytes": 10692,
+      "sha256": "4421a27237dfc34c9f24b60d212c80fb91e3d2a67e83d0d5a589d50b03d3d565"
     },
     {
       "path": "assets/Growth.iconset/icon_128x128.png",
@@ -130,8 +130,8 @@
     },
     {
       "path": "docs/public-source.md",
-      "bytes": 5958,
-      "sha256": "8a03ef92eca2b68da6638f7eaf5d78e66f992854a0d66a0e45425240683eabd9"
+      "bytes": 8474,
+      "sha256": "cb347fe868727b0e2b87a1f2dbaad9a631a448177dcc4360511119c2e0d94683"
     },
     {
       "path": "index.html",
@@ -370,8 +370,8 @@
     },
     {
       "path": "package.json",
-      "bytes": 4270,
-      "sha256": "5a764529601f66d83ef4fbd8c448b8591020c9ae9a42f6f9f4f2aaf2227931fc"
+      "bytes": 4337,
+      "sha256": "211ff8b6c89fc8460b784e4ebc4431bf352a6465138539661d8f554d4377e889"
     },
     {
       "path": "pnpm-lock.yaml",
@@ -385,8 +385,8 @@
     },
     {
       "path": "scripts/build-browser-sw.mjs",
-      "bytes": 9878,
-      "sha256": "a005889b3c81b8d6b5579035d17fe640f1ad6cb828effdc61a5428f314faad33"
+      "bytes": 13529,
+      "sha256": "754a84f68353771640a17ba7a399cc6d1c08341a9a28d715a8830c669132f5af"
     },
     {
       "path": "scripts/build-main.mjs",
@@ -402,6 +402,11 @@
       "path": "scripts/generate-icon.py",
       "bytes": 2107,
       "sha256": "0eb51fe4efadb56d162a936eedfc6c4145d49cd78b7a882c0b771b592c761209"
+    },
+    {
+      "path": "scripts/prepare-browser-asr.mjs",
+      "bytes": 7296,
+      "sha256": "dae43ce2a7b9b397da0918730e45a457b2d18d90dff511dec7ceeb89573984af"
     },
     {
       "path": "scripts/prepare-speech.mjs",
@@ -420,18 +425,18 @@
     },
     {
       "path": "src/browser/app.css",
-      "bytes": 10800,
-      "sha256": "73387d555a8b8f0093ee5a5dbad4dca35c5f4a125f4c5e773c2af33f3d4e3b90"
+      "bytes": 11081,
+      "sha256": "f1e6c39c06e690e3e8ef2d711bf823ad77650b2f39d492bdd2f500e16e13c6e3"
     },
     {
       "path": "src/browser/app.tsx",
-      "bytes": 22653,
-      "sha256": "129018580881f78a01a4685cb56ed927643a80756fc3a81f0ebadc47a5cfccb2"
+      "bytes": 24812,
+      "sha256": "8d6b8fc8addee3b1a8244273e269e89ac553404d15d90962cbcaffc4bf322bf5"
     },
     {
       "path": "src/browser/controller.ts",
-      "bytes": 8439,
-      "sha256": "53cf57f556ce36409ce5b8378d90c9fc48cb26073bfd17d0d0d3f8a45fc49b4b"
+      "bytes": 10173,
+      "sha256": "e40feca042c01a8550c952c1ab7d2056b4502322ebd3b14730d81f460b16fbaa"
     },
     {
       "path": "src/browser/data-panel.tsx",
@@ -460,8 +465,8 @@
     },
     {
       "path": "src/browser/read-aloud.tsx",
-      "bytes": 8570,
-      "sha256": "4c9c66669ffd8f3915ee113ba31ede0d1675c0228600673d94544f19e0df16b5"
+      "bytes": 9520,
+      "sha256": "e5945a8c7120ec51f3a8ed239105a408fd87c2e5fc6fd5e80a2ec70cb7f71a5c"
     },
     {
       "path": "src/browser/repository.ts",
@@ -485,8 +490,63 @@
     },
     {
       "path": "src/browser/teaching.tsx",
-      "bytes": 21347,
-      "sha256": "44258ebdf23b131f59cf0946f8772bf3bda8aceba93f988b93b85a314b77579d"
+      "bytes": 22083,
+      "sha256": "3d5d095bb96eb654cae13e1591aadcad7066af333fe54cc26c1805a11f515eb6"
+    },
+    {
+      "path": "src/browser/voice/capture.worklet.ts",
+      "bytes": 3423,
+      "sha256": "141fd1e6a7ef87cb39c5a7a9fb380b102ee9f222db9166780f1ae77438e223ce"
+    },
+    {
+      "path": "src/browser/voice/coordinator.ts",
+      "bytes": 8648,
+      "sha256": "fc5bc1fb5a44825aaaefb6f96207ba487ea411a909be13ae8f83b6128ad69787"
+    },
+    {
+      "path": "src/browser/voice/draft.ts",
+      "bytes": 7911,
+      "sha256": "1a8e38de790531eb33e4cd0f8a35d48e75fc82b4468df5095af51d38d4bcb46c"
+    },
+    {
+      "path": "src/browser/voice/input.tsx",
+      "bytes": 6824,
+      "sha256": "1057cc6f87948b0d86a24f1aa603e3709e60d4ea18f3c918fc3dee416c0ecc4a"
+    },
+    {
+      "path": "src/browser/voice/manifest.ts",
+      "bytes": 4077,
+      "sha256": "37270b8de7e380498ba01b00e59adfd39b2e1a8f473cb2b00907ed7966d7c62a"
+    },
+    {
+      "path": "src/browser/voice/model-store.ts",
+      "bytes": 11728,
+      "sha256": "9995cc5daec923b4f3dc98d41b95d60d9558f57e06b8746e3e6dc42a8b1c40e1"
+    },
+    {
+      "path": "src/browser/voice/platform.ts",
+      "bytes": 4228,
+      "sha256": "f61486516b2fe4aaebee954da361f8270698af98b8500bee5c020360086c3766"
+    },
+    {
+      "path": "src/browser/voice/resources.json",
+      "bytes": 3851,
+      "sha256": "c913103578748ce3bc2d884945217e713409c54ebc624a0bb53b64681a32a1de"
+    },
+    {
+      "path": "src/browser/voice/runtime.worker.ts",
+      "bytes": 5645,
+      "sha256": "237a6974aeb774d0c63bd7b067593a56fd4def4f58685c92037f78cd12ae1e17"
+    },
+    {
+      "path": "src/browser/voice/service.ts",
+      "bytes": 25514,
+      "sha256": "d19cba4f787214035facc9f5cde105f2d92a5982b0254e9295ebbda7889fd607"
+    },
+    {
+      "path": "src/browser/voice/types.ts",
+      "bytes": 1289,
+      "sha256": "d120bbaad9bc50cdbdae973df59f5c0143b3867195c989c057ea7bd49d8d7303"
     },
     {
       "path": "src/core/backup.ts",
@@ -815,8 +875,8 @@
     },
     {
       "path": "tests/browser-app.test.tsx",
-      "bytes": 27107,
-      "sha256": "c3b1b61cc4738393f99071ec2a3bb9ec69664b449c41cd14c1488b2c76322f35"
+      "bytes": 27276,
+      "sha256": "45025ac0afe5f01760475fd2bc69c51a8c663d3f484542a18a461c07cbc062d2"
     },
     {
       "path": "tests/browser-backup.test.ts",
@@ -825,8 +885,8 @@
     },
     {
       "path": "tests/browser-controller.test.ts",
-      "bytes": 18483,
-      "sha256": "c7e48441d5ec0afda6c3f99f6fbf16f499c8fe6cdca0206e3670cd48c6314e4b"
+      "bytes": 24924,
+      "sha256": "97ebccdffe888721c9b69b935a882730dc92992540f8c9ae07e61a1f924e8bf5"
     },
     {
       "path": "tests/browser-model.test.ts",
@@ -835,8 +895,8 @@
     },
     {
       "path": "tests/browser-notices-build.test.ts",
-      "bytes": 3616,
-      "sha256": "77d91db0ae86025e7e9a1851964362c53418c91f5b3a53b4c5c3bc10b086d6b6"
+      "bytes": 4000,
+      "sha256": "a0154bc4ab66f57939927b3619240cdee06d67879b4019f49ef4b5c4726a3adc"
     },
     {
       "path": "tests/browser-pwa.test.ts",
@@ -845,13 +905,18 @@
     },
     {
       "path": "tests/browser-read-aloud.test.tsx",
-      "bytes": 23549,
-      "sha256": "5f6d68050b751cc655c921d75373c6f8e124b2ac473ef7895e97c66f92d75d3b"
+      "bytes": 27800,
+      "sha256": "4bf98406adacaae8732cf51aaf3d8d2fb5d72feef4f70fa6c78f5091264062d4"
     },
     {
       "path": "tests/browser-repository.test.ts",
       "bytes": 4959,
       "sha256": "db374ae564e3ea8b30f56840ca5557b4e48ae95e91b08ffab2a24ddd690fe296"
+    },
+    {
+      "path": "tests/browser-shell-install.test.ts",
+      "bytes": 8282,
+      "sha256": "2c54a30c59b21ea7e387b0daa479ff3587ca8f1db6953ee8fb2a2c142ff7fa0a"
     },
     {
       "path": "tests/browser-speech.test.ts",
@@ -872,6 +937,46 @@
       "path": "tests/browser-teaching.test.tsx",
       "bytes": 22801,
       "sha256": "2d5950b8d95f0d78ceb4ec47e1762053fdb1c32455d3ca7a108aad58be0378d9"
+    },
+    {
+      "path": "tests/browser-voice-assets.test.ts",
+      "bytes": 12933,
+      "sha256": "ad40e0aa7dd796d2a2b572d810d54efddd7647cb1f703ec9c16549a0e06a51db"
+    },
+    {
+      "path": "tests/browser-voice-capture.test.ts",
+      "bytes": 5384,
+      "sha256": "d278b10afe0325d678a513b403f2d85e50308de4a16a016679d0f1c278557f95"
+    },
+    {
+      "path": "tests/browser-voice-draft.test.ts",
+      "bytes": 23214,
+      "sha256": "ee54a9ba136ee65b5db6147a31821e878f727ca9f8eb616d64bad04d0179b57e"
+    },
+    {
+      "path": "tests/browser-voice-input.test.tsx",
+      "bytes": 20781,
+      "sha256": "9774b36a671717e0375c450fc56dc1876c5f504a15feeabd67da4074947cd193"
+    },
+    {
+      "path": "tests/browser-voice-platform.test.ts",
+      "bytes": 4901,
+      "sha256": "7fcb62795e62b554df9e7504fe74408ca1c531aa34b418b1ad8d627834a14e33"
+    },
+    {
+      "path": "tests/browser-voice-service.test.ts",
+      "bytes": 24315,
+      "sha256": "7ade86cb048722c6879210330f32923aeb61c3bfed5fbcbbed7ff992c296ef77"
+    },
+    {
+      "path": "tests/browser-voice-store.test.ts",
+      "bytes": 13893,
+      "sha256": "6c2a97eb2e792fa9193146af92d58feaf34faf9dd966f90b260581ea18ae9b9f"
+    },
+    {
+      "path": "tests/browser-voice-worker.test.ts",
+      "bytes": 8760,
+      "sha256": "064638a437555a061c26ffa614b54dd322623cfef806d90635a3e0ab6f7d65e0"
     },
     {
       "path": "tests/cache-agent.test.ts",
@@ -975,8 +1080,8 @@
     },
     {
       "path": "tests/public-source.test.ts",
-      "bytes": 20439,
-      "sha256": "071f034994658c7b7d63170258effd9705b5477fe0a0457353a38e6bc856a1c2"
+      "bytes": 22076,
+      "sha256": "4827f16676d1635778d6956ba67cbde7efabe718c6393961793504a3ecb4fc60"
     },
     {
       "path": "tests/quick-demo.test.ts",
@@ -1055,8 +1160,8 @@
     },
     {
       "path": "vite.browser.config.ts",
-      "bytes": 1496,
-      "sha256": "31406ac207ab9df545b0d00195c9fe4cded95a7e3d60923724a58700805b7953"
+      "bytes": 1643,
+      "sha256": "0f9836da3c041de6f0fda159ebeb0f0506e645ebfcc4034bae04e040c167ed2b"
     },
     {
       "path": "vite.config.ts",

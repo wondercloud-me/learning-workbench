@@ -1,6 +1,7 @@
-import {cp, readdir, readFile, stat, writeFile} from 'node:fs/promises';
+import {cp, open, readdir, readFile, rename, rm, stat} from 'node:fs/promises';
 import {resolve, join, relative} from 'node:path';
 import {pathToFileURL} from 'node:url';
+import {createHash, randomUUID} from 'node:crypto';
 
 export function validateBrowserBase(base) {
  if(typeof base!=='string'||!/^\/(?:[A-Za-z0-9_-]+\/)*$/.test(base))throw new Error('WORKBENCH_BROWSER_BASE must be an absolute local path starting and ending with /');
@@ -22,19 +23,49 @@ export async function copyBrowserNotices({sourceDir,outDir}) {
  }
  for(const name of names)await cp(join(sourceDir,name),join(outDir,name),{recursive:true});
 }
-export async function generateBrowserServiceWorker({outDir,base,buildId}) {
+async function optionalRules(manifest,base,buildId){
+ if(!manifest)return null;
+ const metadata=JSON.parse(await readFile(new URL('../src/browser/voice/resources.json',import.meta.url),'utf8'));
+ const basePath=base+metadata.pathPrefix+metadata.runtime.version+'/'+buildId+'/';
+ if(manifest.schemaVersion!==1||manifest.buildId!==buildId||manifest.basePath!==basePath||manifest.modelKind!==metadata.model.kind||manifest.runtimeVersion!==metadata.runtime.version||!Array.isArray(manifest.files)||manifest.files.length!==7)throw Error('Invalid optional ASR deployment manifest');
+ const expected=[...metadata.files,{role:'worker',filename:'runtime.worker.js'},{role:'worklet',filename:'capture.worklet.js'}];
+ const files=manifest.files.map((file,i)=>{
+  const pinned=expected[i],url=basePath+pinned.filename;
+  if(file.role!==pinned.role||file.filename!==pinned.filename||file.url!==url||!Number.isSafeInteger(file.bytes)||file.bytes<=0||!/^[a-f0-9]{64}$/.test(file.sha256)||
+   (pinned.sha256&&(file.sha256!==pinned.sha256||file.bytes!==pinned.bytes))||
+   (file.downloadUrl!==url+'?wb-asr-download=1'&&(!['model','tokens'].includes(file.role)||file.downloadUrl!==pinned.source)))throw Error('Invalid optional ASR resource: '+pinned.role);
+  return {role:file.role,filename:file.filename,url,downloadUrl:file.downloadUrl,bytes:file.bytes,sha256:file.sha256};
+ });
+ const canonical={schemaVersion:1,buildId,basePath,modelKind:metadata.model.kind,runtimeVersion:metadata.runtime.version,files};
+ const digest=createHash('sha256').update(JSON.stringify(canonical)).digest('hex');
+ return {digest,cachePrefix:metadata.namespace+':'+digest+':',markerPath:basePath+'ready.json',resourcePaths:files.map(f=>f.url),paths:files.filter(f=>['glue','wasm','wrapper','worker','worklet'].includes(f.role)).map(f=>f.url)};
+}
+async function replaceBuildFiles(outDir,outputs){
+ const staged=[];
+ try{
+  // Finish and close every write before replacing either completed shell file.
+  for(const [filename,content] of outputs){
+   const temporary=join(outDir,'.'+filename+'.'+randomUUID()+'.tmp');
+   const handle=await open(temporary,'wx');
+   staged.push({temporary,destination:join(outDir,filename)});
+   try{await handle.writeFile(content);}finally{await handle.close();}
+  }
+  for(const file of staged)await rename(file.temporary,file.destination);
+ }finally{await Promise.all(staged.map(file=>rm(file.temporary,{force:true})));}
+}
+export async function generateBrowserServiceWorker({outDir,base,buildId,optionalManifest}) {
  validateBrowserBase(base);
  if(typeof buildId!=='string'||!buildId||!/^[a-zA-Z0-9_-]+$/.test(buildId))throw new Error('Invalid browser build ID');
+ const optional=await optionalRules(optionalManifest,base,buildId);
  const manifestPath=join(outDir,'manifest.webmanifest');
  const manifest=JSON.parse(await readFile(manifestPath,'utf8'));
  Object.assign(manifest,{id:base,start_url:base,scope:base});
- await writeFile(manifestPath,JSON.stringify(manifest,null,2)+'\n');
- const files=(await filesIn(outDir)).map(f=>relative(outDir,f).replaceAll('\\','/')).filter(f=>f!=='sw.js').sort();
+ const files=(await filesIn(outDir)).map(f=>relative(outDir,f).replaceAll('\\','/')).filter(f=>f!=='sw.js'&&!f.startsWith('optional-asr/')).sort();
  if(!files.includes('index.html')||!files.some(f=>f.endsWith('.wasm'))||!files.some(f=>/lab\.worker[-.].*\.js$/.test(f)))throw new Error('Browser build must include index.html, local WASM and lab.worker');
  if(files.some(f=>f.includes('..')||f.includes('?')||f.includes('#')||f.startsWith('/')))throw new Error('Unsafe output asset path');
- await writeFile(join(outDir,'sw.js'),renderWorker({base,buildId,files}));
+ await replaceBuildFiles(outDir,[['manifest.webmanifest',JSON.stringify(manifest,null,2)+'\n'],['sw.js',renderWorker({base,buildId,files,optional})]]);
 }
-function renderWorker({base,buildId,files}) {
+function renderWorker({base,buildId,files,optional}) {
  return String.raw`/* Generated from this browser build. Never cache user or API data. */
 const BASE=${JSON.stringify(base)}, BUILD=${JSON.stringify(buildId)};
 const PREFIX='growth-workbench-shell-'+encodeURIComponent(BASE)+'-';
@@ -44,17 +75,19 @@ const ORIGIN=self.location.origin;
 const URLS=new Set(ASSETS.map(p=>ORIGIN+p));
 const SHELL=ORIGIN+BASE+'index.html';
 const META=ORIGIN+BASE+'__wb_cache_build__';
+const OPTIONAL=${JSON.stringify(optional)};
 const rounds=new Map();
 let updating=false,transaction;
 const notify=(clients,type,updateId)=>{for(const client of clients)client.postMessage({type,updateId,buildId:BUILD});};
 const scopedClients=async()=> (await self.clients.matchAll({type:'window',includeUncontrolled:true})).filter(c=>c.url.startsWith(ORIGIN+BASE));
 self.addEventListener('install',event=>event.waitUntil((async()=>{
  try {
-  // Fetch every required resource before committing any part of this version.
+  // Fetch and consume every required resource before committing this version.
   const responses=await Promise.all(ASSETS.map(async p=>{
    const url=ORIGIN+p, response=await fetch(new Request(url,{cache:'reload',credentials:'omit',redirect:'error'}));
    if(!response.ok||response.type==='opaque'||(response.url&&new URL(response.url).origin!==ORIGIN))throw Error('Required offline asset unavailable: '+p);
-   return [url,response];
+   const cached=response.clone();await response.blob();
+   return [url,cached];
   }));
   const cache=await caches.open(CACHE);
   await Promise.all(responses.map(([url,response])=>cache.put(url,response)));
@@ -70,6 +103,22 @@ self.addEventListener('fetch',event=>{
  const r=event.request,u=new URL(r.url);
  // Let the browser expose real network failures for external, credentialed and API traffic.
  if(r.method!=='GET'||u.origin!==ORIGIN||r.headers.has('Authorization')||u.search||u.pathname.includes('/api/')||!u.pathname.startsWith(BASE))return;
+ if(OPTIONAL?.paths.includes(u.pathname)){
+  event.respondWith((async()=>{
+   const expected=OPTIONAL.resourcePaths.map(path=>ORIGIN+path);
+   for(const key of (await caches.keys()).reverse()){
+    if(!key.startsWith(OPTIONAL.cachePrefix))continue;
+    const cache=await caches.open(key),record=await cache.match(ORIGIN+OPTIONAL.markerPath);
+    if(!record)continue;
+    try{
+     const marker=await record.json();
+     if(marker.schemaVersion!==1||marker.manifestDigest!==OPTIONAL.digest||marker.cacheName!==key||!Array.isArray(marker.resourceUrls)||marker.resourceUrls.length!==expected.length||expected.some((url,i)=>marker.resourceUrls[i]!==url))continue;
+     const response=await cache.match(u.href);if(response)return response;
+    }catch{continue;}
+   }
+   return new Response('Verified optional ASR resource unavailable; explicitly download again.',{status:503,headers:{'Content-Type':'text/plain; charset=utf-8'}});
+  })());return;
+ }
  const navigation=r.mode==='navigate';
  if(navigation&&!([BASE,BASE+'index.html'].includes(u.pathname)))return;
  if(!navigation&&!URLS.has(u.href)){

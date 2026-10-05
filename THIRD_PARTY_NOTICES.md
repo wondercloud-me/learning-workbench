@@ -62,6 +62,12 @@ The [v1.13.8 build definitions](https://github.com/k2-fsa/sherpa-onnx/tree/v1.13
 
 This list is based on the pinned upstream build and supplied notices. A changed runtime, feature flag or rebuilt engine needs another dependency/license check. A successful build does not establish legal permission for unrelated cached tutorial content or user materials.
 
+### Optional browser speech resources
+
+The optional browser engine uses the matching glue, WASM and ASR wrapper from the official `sherpa_onnx_web@1.13.8` [pub.dev archive](https://pub.dev/api/archives/sherpa_onnx_web-1.13.8.tar.gz), 4,351,745 bytes, SHA-256 `e25a3813eb080636280b23dd4b0098252902675158b66dceda1efba061adf5d7`. The [fixed official package definition](https://github.com/k2-fsa/sherpa-onnx/blob/11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf/flutter/sherpa_onnx_web/pubspec.yaml) and [publication workflow](https://github.com/k2-fsa/sherpa-onnx/blob/11afbd009a7f8c08f4bcf2fc1b265d0df4670fbf/.github/workflows/release-dart-package.yaml#L923) identify this distribution. Engine Apache-2.0 text reuses [licenses/sherpa-onnx-LICENSE.txt](licenses/sherpa-onnx-LICENSE.txt); no duplicate alias is introduced. Archive/trio sizes, hashes and provenance are recorded in [src/browser/voice/resources.json](src/browser/voice/resources.json). The pinned source references establish the publication route, not an executed verification of the binary's source Git SHA or every compiler option.
+
+The browser candidate is the unchanged SenseVoice Small INT8 model and tokens at [fixed conversion revision 2365bae](https://huggingface.co/csukuangfj/sherpa-onnx-sense-voice-zh-en-ja-ko-yue-2024-07-17/tree/2365baeacb507f821a0c8120fcee3d484dba7a07). Its model agreement remains the separate [SenseVoice-MODEL-LICENSE.txt](licenses/SenseVoice-MODEL-LICENSE.txt), with the existing attribution above. The browser runtime's Apache license does not relicense these weights. Explicit preparation verifies both existing license texts in the shell artifact and records model delivery URLs; it does not download or redistribute weights. A configured fixed Hugging Face URL is not proof of browser CORS access or permission to publish a weight mirror. The default browser build downloads neither the runtime archive nor model resources.
+
 macOS speech synthesis uses the operating system's say program; no TTS voices or weights are redistributed. Windows speech synthesis is currently unavailable and does not bundle a voice engine. System libraries remain supplied by the target OS.
 
 ## External learning sources and private data

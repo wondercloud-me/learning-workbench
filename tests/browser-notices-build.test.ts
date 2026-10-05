@@ -13,7 +13,10 @@ afterEach(async()=>{await Promise.all(folders.splice(0).map(p=>rm(p,{recursive:t
 async function fixture(){
  const root=await mkdtemp(join(tmpdir(),'workbench-browser-notices-'));folders.push(root);
  for(const name of requiredNotices)await cp(join(sourceDir,name),join(root,name),{recursive:true});
- const outDir=join(root,'dist-browser');await mkdir(join(outDir,'assets'),{recursive:true});
+  const outDir=join(root,'dist-browser');await mkdir(join(outDir,'assets'),{recursive:true});
+ await mkdir(join(outDir,'optional-asr/1.13.8/notice-test'),{recursive:true});
+ await writeFile(join(outDir,'optional-asr/1.13.8/notice-test/resources.json'),'optional manifest fixture');
+ await writeFile(join(outDir,'optional-asr/1.13.8/notice-test/sherpa-onnx-wasm-web.wasm'),'optional runtime fixture');
  await writeFile(join(outDir,'index.html'),'<h1>browser shell</h1>');
  await writeFile(join(outDir,'assets/lab.worker-test.js'),'worker');
  await writeFile(join(outDir,'assets/quickjs-test.wasm'),'wasm');
@@ -38,6 +41,7 @@ describe('browser build notice packaging',()=>{
   const expected=['LICENSE','THIRD_PARTY_NOTICES.md',...await noticeFiles(join(sourceDir,'licenses'))];
   const worker=await readFile(join(outDir,'sw.js'),'utf8');
   const assets=JSON.parse(worker.match(/^const ASSETS=(.*);$/m)![1]) as string[];
+  expect(assets.some(asset=>asset.includes('/optional-asr/'))).toBe(false);
   expect(assets).toContain('/learning-workbench/learn/licenses/NOTICE.md');
   expect(assets).toContain('/learning-workbench/learn/licenses/jitl-quickjs-wasmfile-release-sync-0.32.0-LICENSE');
   for(const name of expected){

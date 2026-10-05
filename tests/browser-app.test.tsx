@@ -29,7 +29,7 @@ function memoryController(initial = emptyBrowserDocument()) {
   let revision = 0;
   const listeners = new Set<() => void>();
   const snapshot = (): BrowserSnapshot => ({schemaVersion: 1, revision, updatedAt: '2026-10-05T00:00:00.000Z', document});
-  const controller = {
+  const controller: BrowserController = {
     snapshot, pendingDocument: () => document,
     subscribe: (listener: () => void) => {listeners.add(listener); return () => listeners.delete(listener);},
     change: async (mutator: (latest: BrowserDocument) => BrowserDocument) => {document = mutator(document); revision++; listeners.forEach(fn => fn()); return snapshot();},
@@ -37,8 +37,10 @@ function memoryController(initial = emptyBrowserDocument()) {
     isBusy: () => false, hasPending: () => false, storageStatus: () => 'saved' as const,
     recoveries: async () => [], reloadLatest: async () => snapshot(), close: () => {},
     acquireUpdateLock: () => () => {},
+    documentGeneration: () => 0, messageDraftRevision: () => 0,
+    acquireVoiceOperation: () => {throw new Error('Voice input is disabled in this legacy UI fixture.');},
     withOperation: async <T,>(_kind: string, operation: () => Promise<T>) => operation(),
-  } as BrowserController;
+  };
   return controller;
 }
 async function mount(initial?: BrowserDocument, providedController?: BrowserController) {
